@@ -1,0 +1,6 @@
+{
+  "name": "YurtApp",
+  "description": "An AI-powered multi-tenant dormitory management SaaS platform featuring lifestyle compatibility matchmaking, admin dashboards, student applications, and payment tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

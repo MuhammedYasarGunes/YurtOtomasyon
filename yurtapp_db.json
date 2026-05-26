@@ -1,0 +1,443 @@
+{
+  "tenants": [
+    {
+      "id": "tenant-oakridge",
+      "name": "Oakridge Manor Dormitory",
+      "location": "East Campus, University District",
+      "monthlyFee": 480,
+      "totalRooms": 12
+    },
+    {
+      "id": "tenant-nexus",
+      "name": "Nexus Cyber Tech Residence",
+      "location": "North Tech Zone, Innovation Hub",
+      "monthlyFee": 580,
+      "totalRooms": 15
+    },
+    {
+      "id": "tenant-meadowview",
+      "name": "Meadowview student Village",
+      "location": "West Green Meadows, Lakeside Campus",
+      "monthlyFee": 420,
+      "totalRooms": 10
+    }
+  ],
+  "users": [
+    {
+      "id": "user-super",
+      "email": "super@yurtapp.com",
+      "name": "Ambrose Sterling",
+      "role": "SUPER_ADMIN",
+      "createdAt": "2026-01-10T08:00:00Z"
+    },
+    {
+      "id": "user-oakridge-admin",
+      "email": "oakridge_admin@yurtapp.com",
+      "name": "Harlan Cole",
+      "role": "DORM_ADMIN",
+      "tenantId": "tenant-oakridge",
+      "createdAt": "2026-01-15T09:15:00Z"
+    },
+    {
+      "id": "user-nexus-admin",
+      "email": "nexus_admin@yurtapp.com",
+      "name": "Keira Vance",
+      "role": "DORM_ADMIN",
+      "tenantId": "tenant-nexus",
+      "createdAt": "2026-02-01T10:00:00Z"
+    },
+    {
+      "id": "user-staff1",
+      "email": "staff_john@yurtapp.com",
+      "name": "John Carter",
+      "role": "STAFF",
+      "tenantId": "tenant-oakridge",
+      "createdAt": "2026-02-10T07:30:00Z"
+    },
+    {
+      "id": "user-student-alex",
+      "email": "student_alex@yurtapp.com",
+      "name": "Alex Reed",
+      "role": "STUDENT",
+      "tenantId": "tenant-oakridge",
+      "createdAt": "2026-03-01T11:00:00Z"
+    },
+    {
+      "id": "user-student-sarah",
+      "email": "student_sarah@yurtapp.com",
+      "name": "Sarah Lin",
+      "role": "STUDENT",
+      "tenantId": "tenant-nexus",
+      "createdAt": "2026-03-05T12:00:00Z"
+    },
+    {
+      "id": "user-student-liam",
+      "email": "student_liam@yurtapp.com",
+      "name": "Liam Carter",
+      "role": "STUDENT",
+      "createdAt": "2026-05-18T14:30:00Z"
+    },
+    {
+      "id": "user-student-chloe",
+      "email": "student_chloe@yurtapp.com",
+      "name": "Chloe Davis",
+      "role": "STUDENT",
+      "createdAt": "2026-05-19T10:15:00Z"
+    }
+  ],
+  "studentProfiles": [
+    {
+      "studentId": "user-student-alex",
+      "lifestyleAnswers": {
+        "sleepSchedule": "early-bird",
+        "cleanlinessLevel": 4,
+        "noiseTolerance": 2,
+        "smokingPreference": "non-smoker",
+        "socialLevel": 2,
+        "gamingHabits": "none",
+        "studyHabits": "solo-quiet",
+        "introvertExtrovert": 2,
+        "conflictTolerance": 3,
+        "preferredRoommateType": "Quiet and disciplined academic peer."
+      },
+      "vector": {
+        "social_score": 30,
+        "discipline_score": 85,
+        "cleanliness_score": 80,
+        "noise_tolerance": 30,
+        "night_activity_score": 15
+      },
+      "tags": [
+        "early-bird",
+        "high-discipline",
+        "quiet-study"
+      ],
+      "analyzedAt": "2026-03-01T11:30:00Z"
+    },
+    {
+      "studentId": "user-student-sarah",
+      "lifestyleAnswers": {
+        "sleepSchedule": "night-owl",
+        "cleanlinessLevel": 3,
+        "noiseTolerance": 5,
+        "smokingPreference": "non-smoker",
+        "socialLevel": 5,
+        "gamingHabits": "frequent",
+        "studyHabits": "group-study",
+        "introvertExtrovert": 5,
+        "conflictTolerance": 4,
+        "preferredRoommateType": "Outgoing and gaming-friendly roommate who stays up."
+      },
+      "vector": {
+        "social_score": 90,
+        "discipline_score": 55,
+        "cleanliness_score": 60,
+        "noise_tolerance": 90,
+        "night_activity_score": 85
+      },
+      "tags": [
+        "night-owl",
+        "gamer",
+        "highly-social"
+      ],
+      "analyzedAt": "2026-03-05T12:30:00Z"
+    }
+  ],
+  "applications": [
+    {
+      "id": "app-liam",
+      "studentId": "user-student-liam",
+      "studentName": "Liam Carter",
+      "studentEmail": "student_liam@yurtapp.com",
+      "preferredTenantId": "tenant-nexus",
+      "lifestyleForm": {
+        "sleepSchedule": "night-owl",
+        "cleanlinessLevel": 3,
+        "noiseTolerance": 4,
+        "smokingPreference": "non-smoker",
+        "socialLevel": 4,
+        "gamingHabits": "occasional",
+        "studyHabits": "group-study",
+        "introvertExtrovert": 4,
+        "conflictTolerance": 4,
+        "preferredRoommateType": "I prefer someone outgoing, gaming is cool, who stays up relatively late."
+      },
+      "status": "AI_MATCHED",
+      "vector": {
+        "social_score": 80,
+        "discipline_score": 65,
+        "cleanliness_score": 60,
+        "noise_tolerance": 80,
+        "night_activity_score": 75
+      },
+      "tags": [
+        "night-owl",
+        "highly-social",
+        "moderate-discipline"
+      ],
+      "suggestedRoomId": "room-nexus-301",
+      "compatibilityLog": {
+        "compatibilityScore": 88,
+        "conflictRisk": 15,
+        "matchingNotes": "High compatibility based on owl schedules, high noise tolerance, and joint visual profiles matching resident Sarah Lin."
+      },
+      "submittedAt": "2026-05-18T14:40:00Z"
+    },
+    {
+      "id": "app-chloe",
+      "studentId": "user-student-chloe",
+      "studentName": "Chloe Davis",
+      "studentEmail": "student_chloe@yurtapp.com",
+      "preferredTenantId": "tenant-oakridge",
+      "lifestyleForm": {
+        "sleepSchedule": "early-bird",
+        "cleanlinessLevel": 5,
+        "noiseTolerance": 1,
+        "smokingPreference": "non-smoker",
+        "socialLevel": 1,
+        "gamingHabits": "none",
+        "studyHabits": "solo-quiet",
+        "introvertExtrovert": 1,
+        "conflictTolerance": 2,
+        "preferredRoommateType": "Extremely quiet, tidy, and academically oriented roommate who values sleep."
+      },
+      "status": "SUBMITTED",
+      "submittedAt": "2026-05-19T10:20:00Z"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room-oakridge-101",
+      "tenantId": "tenant-oakridge",
+      "roomNumber": "101",
+      "capacity": 2,
+      "occupancy": 1,
+      "gender": "Male",
+      "residentIds": [
+        "user-student-alex"
+      ],
+      "avgSocialScore": 30,
+      "avgDisciplineScore": 85,
+      "avgNoiseLevel": 30,
+      "profileTags": [
+        "quiet-study",
+        "high-discipline"
+      ]
+    },
+    {
+      "id": "room-oakridge-102",
+      "tenantId": "tenant-oakridge",
+      "roomNumber": "102",
+      "capacity": 2,
+      "occupancy": 0,
+      "gender": "Male",
+      "residentIds": [],
+      "profileTags": []
+    },
+    {
+      "id": "room-oakridge-103",
+      "tenantId": "tenant-oakridge",
+      "roomNumber": "103",
+      "capacity": 4,
+      "occupancy": 0,
+      "gender": "Female",
+      "residentIds": [],
+      "profileTags": []
+    },
+    {
+      "id": "room-nexus-301",
+      "tenantId": "tenant-nexus",
+      "roomNumber": "301",
+      "capacity": 2,
+      "occupancy": 1,
+      "gender": "Female",
+      "residentIds": [
+        "user-student-sarah"
+      ],
+      "avgSocialScore": 90,
+      "avgDisciplineScore": 55,
+      "avgNoiseLevel": 75,
+      "profileTags": [
+        "night-owl",
+        "highly-social",
+        "gamer"
+      ]
+    },
+    {
+      "id": "room-nexus-302",
+      "tenantId": "tenant-nexus",
+      "roomNumber": "302",
+      "capacity": 2,
+      "occupancy": 0,
+      "gender": "Male",
+      "residentIds": [],
+      "profileTags": []
+    },
+    {
+      "id": "room-meadowview-201",
+      "tenantId": "tenant-meadowview",
+      "roomNumber": "201",
+      "capacity": 2,
+      "occupancy": 0,
+      "gender": "Co-Ed",
+      "residentIds": [],
+      "profileTags": []
+    }
+  ],
+  "assignmentLogs": [
+    {
+      "id": "log-alex",
+      "studentId": "user-student-alex",
+      "studentName": "Alex Reed",
+      "roomId": "room-oakridge-101",
+      "roomNumber": "101",
+      "tenantId": "tenant-oakridge",
+      "compatibilityScore": 95,
+      "conflictRisk": 5,
+      "explanation": "Matched into the academic quiet rooms dynamically for high discipline scores & parallel schedules.",
+      "isOverridden": false,
+      "assignedBy": "System (Self-Seeded)",
+      "assignedAt": "2026-03-01T11:45:00Z"
+    },
+    {
+      "id": "log-sarah",
+      "studentId": "user-student-sarah",
+      "studentName": "Sarah Lin",
+      "roomId": "room-nexus-301",
+      "roomNumber": "301",
+      "tenantId": "tenant-nexus",
+      "compatibilityScore": 92,
+      "conflictRisk": 8,
+      "explanation": "Late-night game preference and extroverted behaviors aligns perfectly down to the core gaming lifestyle cluster.",
+      "isOverridden": false,
+      "assignedBy": "System (Self-Seeded)",
+      "assignedAt": "2026-03-05T12:45:00Z"
+    }
+  ],
+  "payments": [
+    {
+      "id": "pay-alex-may",
+      "studentId": "user-student-alex",
+      "studentName": "Alex Reed",
+      "tenantId": "tenant-oakridge",
+      "amount": 480,
+      "dueDate": "2026-05-01",
+      "status": "PAID",
+      "paymentDate": "2026-04-28T14:20:00Z",
+      "transactionHash": "0x8fa40294e823b1dc32",
+      "invoiceNumber": "INV-2026-OAK-104"
+    },
+    {
+      "id": "pay-sarah-may",
+      "studentId": "user-student-sarah",
+      "studentName": "Sarah Lin",
+      "tenantId": "tenant-nexus",
+      "amount": 580,
+      "dueDate": "2026-05-01",
+      "status": "UNPAID",
+      "invoiceNumber": "INV-2026-NEX-213"
+    },
+    {
+      "id": "pay-sarah-april",
+      "studentId": "user-student-sarah",
+      "studentName": "Sarah Lin",
+      "tenantId": "tenant-nexus",
+      "amount": 580,
+      "dueDate": "2026-04-01",
+      "status": "OVERDUE",
+      "invoiceNumber": "INV-2026-NEX-102"
+    }
+  ],
+  "maintenanceRequests": [
+    {
+      "id": "maint-1",
+      "studentId": "user-student-alex",
+      "studentName": "Alex Reed",
+      "roomId": "room-oakridge-101",
+      "roomNumber": "101",
+      "tenantId": "tenant-oakridge",
+      "title": "Clogged bathroom sink",
+      "description": "Water draining incredibly slow, potentially deep blockage.",
+      "category": "Plumbing",
+      "status": "IN_PROGRESS",
+      "urgency": "MEDIUM",
+      "createdAt": "2026-05-18T09:00:00Z",
+      "updatedAt": "2026-05-19T11:00:00Z"
+    },
+    {
+      "id": "maint-2",
+      "studentId": "user-student-sarah",
+      "studentName": "Sarah Lin",
+      "roomId": "room-nexus-301",
+      "roomNumber": "301",
+      "tenantId": "tenant-nexus",
+      "title": "Broken wardrobe rack hinges",
+      "description": "Left wardrobe door is hanging awkwardly because hinges are missing a screw.",
+      "category": "Furniture",
+      "status": "SUBMITTED",
+      "urgency": "LOW",
+      "createdAt": "2026-05-18T16:00:00Z",
+      "updatedAt": "2026-05-18T16:00:00Z"
+    }
+  ],
+  "attendanceLogs": [
+    {
+      "id": "att-1",
+      "studentId": "user-student-alex",
+      "studentName": "Alex Reed",
+      "tenantId": "tenant-oakridge",
+      "roomNumber": "101",
+      "direction": "OUT",
+      "timestamp": "2026-05-20T08:15:00Z",
+      "loggedBy": "Entrance Gate RFID"
+    },
+    {
+      "id": "att-2",
+      "studentId": "user-student-alex",
+      "studentName": "Alex Reed",
+      "tenantId": "tenant-oakridge",
+      "roomNumber": "101",
+      "direction": "IN",
+      "timestamp": "2026-05-20T11:45:00Z",
+      "loggedBy": "Entrance Gate RFID"
+    },
+    {
+      "id": "att-3",
+      "studentId": "user-student-sarah",
+      "studentName": "Sarah Lin",
+      "tenantId": "tenant-nexus",
+      "roomNumber": "301",
+      "direction": "OUT",
+      "timestamp": "2026-05-19T22:30:00Z",
+      "loggedBy": "Dynamic Terminal QR Scanner"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "ann-global-1",
+      "title": "Annual Fire Safety Audits & Inter-Dorm Drills",
+      "content": "All resident buildings will undergo fire warden drills next Tuesday starting from 2:00 PM. Please vacate promptly on sirens.",
+      "priority": "HIGH",
+      "createdAt": "2026-05-15T09:00:00Z"
+    },
+    {
+      "id": "ann-oakridge-1",
+      "tenantId": "tenant-oakridge",
+      "title": "Oakridge HVAC Filtration System Replacements",
+      "content": "East Wing maintenance teams will visit rooms on Wednesday for filter swaps. Secure valuable items.",
+      "priority": "MEDIUM",
+      "targetRole": "STUDENT",
+      "createdAt": "2026-05-18T10:00:00Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1",
+      "userId": "user-student-sarah",
+      "title": "Pending Dormitory Fees Overdue",
+      "message": "Your April invoice is now 49 days overdue. Surcharges of $25 may apply.",
+      "isRead": false,
+      "createdAt": "2026-05-10T09:00:00Z"
+    }
+  ]
+}

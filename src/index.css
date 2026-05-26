@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Quicksand", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  /* Delightful relaxed pastel variables */
+  --color-pastel-blue-dark: #2c5282;
+  --color-pastel-blue-light: #ebf8ff;
+  --color-pastel-green-dark: #276749;
+  --color-pastel-green-light: #f0fff4;
+  --color-pastel-yellow-dark: #975a16;
+  --color-pastel-yellow-light: #fffaf0;
+  --color-pastel-pink-dark: #9b2c2c;
+  --color-pastel-pink-light: #fff5f5;
+}
+
+body {
+  background-color: #f7fafc; /* Very soft light grey background */
+  color: #2d3748; /* Cozy Slate Reading Color */
+  font-family: var(--font-sans);
+}
+
+/* Custom soft scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #edf2f7;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
