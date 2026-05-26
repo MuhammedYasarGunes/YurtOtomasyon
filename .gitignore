@@ -1,8 +1,45 @@
-node_modules/
-build/
-dist/
-coverage/
-.DS_Store
-*.log
+# -----------------------------
+# 🔒 GÜVENLİK & SERTİFİKALAR (ÇOK KRİTİK)
+# -----------------------------
+*.pem
+cert.pem
+key.pem
 .env*
 !.env.example
+
+# -----------------------------
+# 🍏 İŞLETİM SİSTEMİ (macOS)
+# -----------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# -----------------------------
+# 📦 NODE.JS & VITE (Frontend / Express)
+# -----------------------------
+node_modules/
+dist/
+build/
+coverage/
+*.log
+npm-debug.log*
+
+# -----------------------------
+# 🐍 PYTHON & DJANGO (Backend)
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+db.sqlite3
+
+# -----------------------------
+# 🗄️ YEREL VERİTABANI & IDE
+# -----------------------------
+.vscode/
+.idea/
+# Eğer yurtapp_db.json senin yerel test verilerinle doluysa ve 
+# her seferinde github'da değişiklik yaratıyorsa alt satırın başındaki '#' işaretini kaldır:
+yurtapp_db.json
