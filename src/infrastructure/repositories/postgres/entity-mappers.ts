@@ -14,6 +14,8 @@ import {
   Notification,
   StudentProfile,
   ApplicationStatus,
+  LifestyleForm,
+  BehavioralVector,
   RoomGender,
   PaymentStatus,
   MaintenanceStatus,
@@ -79,18 +81,17 @@ export function mapApplicationEntityToDomain(entity: ApplicationEntity): Applica
     studentName: entity.studentName,
     studentEmail: entity.studentEmail,
     preferredTenantId: entity.preferredTenantId,
-    status: entity.status,
-    lifestyleForm: entity.lifestyleForm,
+    status: entity.status as ApplicationStatus,
+    lifestyleForm: entity.lifestyleForm as LifestyleForm,
     suggestedRoomId: entity.suggestedRoomId || undefined,
     compatibilityLog: entity.compatibilityLog || undefined,
-    vector: entity.vector || undefined,
+    vector: entity.vector as BehavioralVector | undefined,
     tags: entity.tags || [],
     submittedAt: entity.submittedAt.toISOString(),
     createdAt: entity.createdAt.toISOString(),
     updatedAt: entity.updatedAt.toISOString(),
   };
 }
-
 export function mapPaymentEntityToDomain(entity: PaymentEntity): Payment {
   return {
     id: entity.id,
@@ -132,6 +133,7 @@ export function mapAttendanceLogEntityToDomain(entity: AttendanceLogEntity): Ent
     studentId: entity.studentId,
     studentName: entity.studentName,
     tenantId: entity.tenantId,
+    roomId: entity.roomId,
     roomNumber: entity.roomNumber,
     direction: entity.direction,
     timestamp: entity.timestamp.toISOString(),
@@ -168,8 +170,8 @@ export function mapNotificationEntityToDomain(entity: NotificationEntity): Notif
 export function mapStudentProfileEntityToDomain(entity: StudentProfileEntity): StudentProfile {
   return {
     studentId: entity.studentId,
-    lifestyleAnswers: entity.lifestyleAnswers,
-    vector: entity.vector || undefined,
+    lifestyleAnswers: entity.lifestyleAnswers as unknown as LifestyleForm,
+    vector: entity.vector as unknown as BehavioralVector | undefined,
     tags: entity.tags || [],
     analyzedAt: entity.analyzedAt.toISOString(),
     updatedAt: entity.updatedAt.toISOString(),

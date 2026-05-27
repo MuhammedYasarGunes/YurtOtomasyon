@@ -2,7 +2,7 @@
  * Postgres implementation for IStudentProfileRepository
  */
 
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { IStudentProfileRepository } from '../../../domain/repositories/interfaces.js';
 import { StudentProfile } from '../../../domain/types.js';
 import { StudentProfileEntity } from '../../database/entities/student-profile.entity.js';
@@ -31,11 +31,13 @@ export class PostgresStudentProfileRepository implements IStudentProfileReposito
   async save(profile: StudentProfile): Promise<StudentProfile> {
     const repo = await this.repositoryPromise;
     const entity = repo.create({
-      ...profile,
+      studentId: profile.studentId,
+      lifestyleAnswers: profile.lifestyleAnswers as Record<string, any>,
+      vector: profile.vector ? (profile.vector as unknown as Record<string, number>) : undefined,
       tags: profile.tags || [],
       analyzedAt: new Date(profile.analyzedAt),
       updatedAt: new Date(profile.updatedAt),
-    });
+    } as DeepPartial<StudentProfileEntity>);
     const saved = await repo.save(entity);
     return mapStudentProfileEntityToDomain(saved);
   }

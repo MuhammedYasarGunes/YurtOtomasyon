@@ -28,19 +28,29 @@ const baseOptions: Partial<DataSourceOptions> = {
   subscribers: [],
 };
 
-let dataSource: DataSource;
+let dataSource: DataSource | null = null;
+let dataSourcePromise: Promise<DataSource> | null = null;
 
 /**
  * Get or create database connection
  */
 export async function getDataSource(): Promise<DataSource> {
-  if (dataSource && dataSource.isInitialized) {
+  if (dataSource?.isInitialized) {
     return dataSource;
   }
 
-  try {
-    if (env.DB_TYPE === 'postgres') {
-      dataSource = new DataSource({
+  if (dataSourcePromise) {
+    return dataSourcePromise;
+  }
+
+  dataSourcePromise = (async () => {
+    try {
+      const migrationsPaths = [
+        'dist/infrastructure/migrations/**/*.js',
+        'src/infrastructure/database/migrations/**/*.ts',
+      ];
+
+      const ds = new DataSource({
         ...baseOptions,
         type: 'postgres',
         host: env.DB_HOST,
@@ -60,25 +70,27 @@ export async function getDataSource(): Promise<DataSource> {
           NotificationEntity,
           StudentProfileEntity,
         ],
+        migrations: migrationsPaths,
+        synchronize: env.NODE_ENV === 'development' ? true : env.DB_SYNCHRONIZE,
       } as DataSourceOptions);
-    } else if (env.DB_TYPE === 'mongodb') {
-      throw new Error('MongoDB support coming soon');
-    } else {
-      throw new Error(`Unsupported database type: ${env.DB_TYPE}`);
+
+      await ds.initialize();
+      dataSource = ds;
+      Logger.info('✅ Database connection established', {
+        type: env.DB_TYPE,
+        host: env.DB_HOST,
+        database: env.DB_DATABASE,
+      });
+
+      return dataSource;
+    } catch (error) {
+      dataSourcePromise = null;
+      Logger.error('❌ Database connection failed', error as Error);
+      throw error;
     }
+  })();
 
-    await dataSource.initialize();
-    Logger.info('✅ Database connection established', { 
-      type: env.DB_TYPE,
-      host: env.DB_HOST,
-      database: env.DB_DATABASE 
-    });
-
-    return dataSource;
-  } catch (error) {
-    Logger.error('❌ Database connection failed', error as Error);
-    throw error;
-  }
+  return dataSourcePromise;
 }
 
 /**

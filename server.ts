@@ -2,21 +2,20 @@ import express, { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { v4 as uuidv4 } from 'uuid';
 
 // Clean Architecture Domain & Infrastructure layers
-import {
-  JSONUserRepository,
-  JSONTenantRepository,
-  JSONRoomRepository,
-  JSONApplicationRepository,
-  JSONPaymentRepository,
-  JSONMaintenanceRepository,
-  JSONAttendanceRepository,
-  JSONAnnouncementRepository,
-  JSONNotificationRepository,
-  JSONStudentProfileRepository,
-  JSONAssignmentLogRepository
-} from "./src/infrastructure/repositories/JSONRepositories.js";
+import { PostgresUserRepository } from "./src/infrastructure/repositories/postgres/user.repository.js";
+import { PostgresTenantRepository } from "./src/infrastructure/repositories/postgres/tenant.repository.js";
+import { PostgresRoomRepository } from "./src/infrastructure/repositories/postgres/room.repository.js";
+import { PostgresApplicationRepository } from "./src/infrastructure/repositories/postgres/application.repository.js";
+import { PostgresPaymentRepository } from "./src/infrastructure/repositories/postgres/payment.repository.js";
+import { PostgresMaintenanceRepository } from "./src/infrastructure/repositories/postgres/maintenance.repository.js";
+import { PostgresAttendanceRepository } from "./src/infrastructure/repositories/postgres/attendance.repository.js";
+import { PostgresAnnouncementRepository } from "./src/infrastructure/repositories/postgres/announcement.repository.js";
+import { PostgresNotificationRepository } from "./src/infrastructure/repositories/postgres/notification.repository.js";
+import { PostgresStudentProfileRepository } from "./src/infrastructure/repositories/postgres/student-profile.repository.js";
+import { PostgresAssignmentLogRepository } from "./src/infrastructure/repositories/postgres/assignment-log.repository.js";
 
 // Clean Architecture Application Usecases/Interactors
 import {
@@ -29,7 +28,6 @@ import {
 
 import { analyzeStudentLifestyle, explainRoomCompatibility } from "./src/gemini.js";
 import { ApplicationStatus, UserRole, Notification, EntryExitLog, Announcement } from "./src/domain/types.js";
-import { readDB, writeDB } from "./src/db.js";
 import https from 'https'; // Bunu ekleyin
 
 const app = express();
@@ -39,17 +37,17 @@ app.use(express.json());
 const PORT = 3000;
 
 // Dependency Injection Setup
-const userRepo = new JSONUserRepository();
-const tenantRepo = new JSONTenantRepository();
-const roomRepo = new JSONRoomRepository();
-const appRepo = new JSONApplicationRepository();
-const paymentRepo = new JSONPaymentRepository();
-const maintRepo = new JSONMaintenanceRepository();
-const attendanceRepo = new JSONAttendanceRepository();
-const announcementRepo = new JSONAnnouncementRepository();
-const notifRepo = new JSONNotificationRepository();
-const studentProfileRepo = new JSONStudentProfileRepository();
-const assignmentLogRepo = new JSONAssignmentLogRepository();
+const userRepo = new PostgresUserRepository();
+const tenantRepo = new PostgresTenantRepository();
+const roomRepo = new PostgresRoomRepository();
+const appRepo = new PostgresApplicationRepository();
+const paymentRepo = new PostgresPaymentRepository();
+const maintRepo = new PostgresMaintenanceRepository();
+const attendanceRepo = new PostgresAttendanceRepository();
+const announcementRepo = new PostgresAnnouncementRepository();
+const notifRepo = new PostgresNotificationRepository();
+const studentProfileRepo = new PostgresStudentProfileRepository();
+const assignmentLogRepo = new PostgresAssignmentLogRepository();
 
 const submitAppUseCase = new SubmitApplicationUseCase(userRepo, appRepo);
 const assignRoomUseCase = new AssignRoomUseCase(
@@ -69,7 +67,7 @@ const createMaintUseCase = new CreateMaintenanceUseCase(userRepo, roomRepo, main
 // Helper to quickly dispatch dynamic notifications via clean architecture repo
 async function createInAppNotification(userId: string, title: string, message: string) {
   const newNotif: Notification = {
-    id: "notif-" + Math.random().toString(36).substring(2, 11),
+    id: uuidv4(),
     userId,
     title,
     message,
@@ -112,7 +110,7 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
 
     if (!foundUser) {
       const newStudent = {
-        id: "user-" + Math.random().toString(36).substring(2, 11),
+        id: uuidv4(),
         email: email.toLowerCase().trim(),
         name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
         role: UserRole.STUDENT,
@@ -138,7 +136,7 @@ app.post("/api/auth/register-custom", async (req: Request, res: Response) => {
     }
 
     const newUser = {
-      id: "user-" + Math.random().toString(36).substring(2, 11),
+      id: uuidv4(),
       email: email.toLowerCase().trim(),
       name,
       role,
@@ -400,15 +398,16 @@ app.post("/api/attendance/log", async (req: Request, res: Response) => {
     const student = await userRepo.getById(studentId);
     if (!student) throw new Error("Öğrenci bulunamadı");
 
-    const db = readDB();
-    const room = db.rooms.find((r) => r.residentIds.includes(studentId));
+    const rooms = await roomRepo.getAll();
+    const room = rooms.find((r) => r.residentIds.includes(studentId));
     const roomNo = room ? room.roomNumber : "YOK";
 
-    const newLog: EntryExitLog = {
-      id: "att-" + Math.random().toString(36).substring(2, 11),
+    const newLog: EntryExitLog & { roomId?: string } = {
+      id: uuidv4(),
       studentId,
       studentName: student.name,
       tenantId: student.tenantId || "YOK",
+      roomId: room?.id,
       roomNumber: roomNo,
       direction,
       timestamp: new Date().toISOString(),
@@ -437,7 +436,7 @@ app.post("/api/announcements/create", async (req: Request, res: Response) => {
     }
 
     const newAnn: Announcement = {
-      id: "ann-" + Math.random().toString(36).substring(2, 11),
+      id: uuidv4(),
       tenantId: tenantId || undefined,
       title,
       content,
@@ -472,7 +471,6 @@ app.post("/api/notifications/:userId/mark-read", async (req: Request, res: Respo
 app.get("/api/dashboard/stats", async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.query;
-    const db = readDB();
 
     let targetRooms = await roomRepo.getAll();
     let targetPayments = await paymentRepo.getAll();
@@ -500,9 +498,9 @@ app.get("/api/dashboard/stats", async (req: Request, res: Response) => {
     const matchedAppsCount = targetApps.filter((a) => a.status === ApplicationStatus.AI_MATCHED).length;
     const assignedAppsCount = targetApps.filter((a) => a.status === ApplicationStatus.ASSIGNED).length;
 
-    let targetLogs = db.assignmentLogs;
+    let targetLogs = await assignmentLogRepo.getAll();
     if (tenantId) {
-      targetLogs = db.assignmentLogs.filter((l: any) => l.tenantId === tenantId);
+      targetLogs = targetLogs.filter((l) => l.tenantId === tenantId);
     }
     const avgScore = targetLogs.length > 0
       ? Math.round(targetLogs.reduce((sum, l) => sum + l.compatibilityScore, 0) / targetLogs.length)

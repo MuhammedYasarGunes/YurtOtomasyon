@@ -2,7 +2,7 @@
  * Postgres implementation for IPaymentRepository
  */
 
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { IPaymentRepository } from '../../../domain/repositories/interfaces.js';
 import { Payment } from '../../../domain/types.js';
 import { PaymentEntity } from '../../database/entities/payment.entity.js';
@@ -31,12 +31,19 @@ export class PostgresPaymentRepository implements IPaymentRepository {
   async save(payment: Payment): Promise<Payment> {
     const repo = await this.repositoryPromise;
     const entity = repo.create({
-      ...payment,
+      id: payment.id,
+      studentId: payment.studentId,
+      tenantId: payment.tenantId,
+      studentName: payment.studentName,
+      amount: payment.amount,
       dueDate: new Date(payment.dueDate),
-      paymentDate: payment.paymentDate ? new Date(payment.paymentDate) : null,
+      status: payment.status,
+      paymentDate: payment.paymentDate ? new Date(payment.paymentDate) : undefined,
+      transactionHash: payment.transactionHash ?? undefined,
+      invoiceNumber: payment.invoiceNumber,
       createdAt: new Date(payment.createdAt),
       updatedAt: new Date(payment.updatedAt),
-    });
+    } as DeepPartial<PaymentEntity>);
     const saved = await repo.save(entity);
     return mapPaymentEntityToDomain(saved);
   }

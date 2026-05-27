@@ -103,13 +103,13 @@ export default function App() {
 
   // Oda Arkadaşı Anketi Form Bilgileri (Ev arkadaşı eşleştirme için)
   const [prefDorm, setPrefDorm] = useState("tenant-nexus");
-  const [sleepSchedule, setSleepSchedule] = useState<"early-bird" | "night-owl" | "irregular">("early-bird");
+  const [sleepSchedule, setSleepSchedule] = useState<"early-bird" | "normal" | "night-owl" | "irregular">("early-bird");
   const [cleanlinessLevel, setCleanlinessLevel] = useState(4);
   const [noiseTolerance, setNoiseTolerance] = useState(3);
   const [smokingPreference, setSmokingPreference] = useState<"non-smoker" | "smoker" | "no-preference">("non-smoker");
   const [socialLevel, setSocialLevel] = useState(3);
   const [gamingHabits, setGamingHabits] = useState<"none" | "occasional" | "frequent">("none");
-  const [studyHabits, setStudyHabits] = useState<"solo-quiet" | "group-study" | "irregular">("solo-quiet");
+  const [studyHabits, setStudyHabits] = useState<"solo-quiet" | "group-study" | "flexible" | "irregular">("solo-quiet");
   const [introvertExtrovert, setIntrovertExtrovert] = useState(2);
   const [conflictTolerance, setConflictTolerance] = useState(3);
   const [preferredRoommateType, setPreferredRoommateType] = useState(
@@ -120,12 +120,12 @@ export default function App() {
   const [maintTitle, setMaintTitle] = useState("");
   const [maintDesc, setMaintDesc] = useState("");
   const [maintCategory, setMaintCategory] = useState<"Plumbing" | "Electrical" | "HVAC" | "Furniture" | "Other">("Plumbing");
-  const [maintUrgency, setMaintUrgency] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
+  const [maintUrgency, setMaintUrgency] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL">("MEDIUM");
 
   // Duyuru Form Durumu
   const [annTitle, setAnnTitle] = useState("");
   const [annContent, setAnnContent] = useState("");
-  const [annPriority, setAnnPriority] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
+  const [annPriority, setAnnPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL">("MEDIUM");
   const [annTargetRole, setAnnTargetRole] = useState<string>("ALL");
 
   // Yapay Zeka Gemini Analiz Animasyon Durumları
@@ -510,7 +510,7 @@ export default function App() {
   };
 
   // Görsel Yardımcılar: Renkli rozetler
-  const getPriorityBadge = (prio: "LOW" | "MEDIUM" | "HIGH") => {
+  const getPriorityBadge = (prio: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL") => {
     switch (prio) {
       case "HIGH":
         return <span className="inline-flex items-center px-3 py-1 text-xs font-bold text-pastel-pink-dark bg-pastel-pink-light border border-red-200 rounded-full">YÜKSEK</span>;

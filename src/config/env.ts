@@ -1,15 +1,7 @@
-import { z } from 'zod';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { z } from 'zod';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load .env file
-dotenv.config({ 
-  path: path.join(__dirname, '../../.env.local') 
-});
+dotenv.config();
 
 // Environment variable schema
 const EnvSchema = z.object({
@@ -20,7 +12,7 @@ const EnvSchema = z.object({
   // Database
   DB_TYPE: z.enum(['postgres', 'mongodb']).default('postgres'),
   DB_HOST: z.string().default('localhost'),
-  DB_PORT: z.coerce.number().default(5432),
+  DB_PORT: z.coerce.number().default(5434), // Docker için kullandığımız port
   DB_USERNAME: z.string(),
   DB_PASSWORD: z.string(),
   DB_DATABASE: z.string(),
@@ -58,6 +50,7 @@ export function getEnvironment(): Environment {
   }
 
   try {
+    // Node.js --env-file sayesinde process.env zaten dolu geliyor!
     cachedEnv = EnvSchema.parse(process.env);
     return cachedEnv;
   } catch (error) {

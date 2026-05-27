@@ -66,6 +66,7 @@ export enum ApplicationStatus {
   AI_MATCHED = 'AI_MATCHED',
   ASSIGNED = 'ASSIGNED',
   REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
 }
 
 export interface CompatibilityLog {
@@ -186,11 +187,12 @@ export interface EntryExitLog {
   studentId: string;
   studentName: string;
   tenantId: string;
+  roomId?: string;
   roomNumber: string;
   direction: 'IN' | 'OUT';
   timestamp: string;
   loggedBy: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export type AnnouncementPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
