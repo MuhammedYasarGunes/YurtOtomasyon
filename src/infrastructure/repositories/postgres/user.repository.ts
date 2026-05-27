@@ -2,7 +2,7 @@
  * Postgres implementation for IUserRepository
  */
 
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { IUserRepository } from '../../../domain/repositories/interfaces.js';
 import { User } from '../../../domain/types.js';
 import { UserEntity } from '../../database/entities/user.entity.js';
@@ -37,11 +37,14 @@ export class PostgresUserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
     const repo = await this.repositoryPromise;
     const entity = repo.create({
-      ...user,
-      tenantId: user.tenantId || null,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      tenantId: user.tenantId ?? undefined,
       createdAt: new Date(user.createdAt),
       updatedAt: new Date(user.updatedAt),
-    });
+    } as DeepPartial<UserEntity>);
     const saved = await repo.save(entity);
     return mapUserEntityToDomain(saved);
   }
@@ -52,7 +55,7 @@ export class PostgresUserRepository implements IUserRepository {
       email: user.email,
       name: user.name,
       role: user.role,
-      tenantId: user.tenantId || null,
+      tenantId: user.tenantId ?? undefined,
       updatedAt: new Date(user.updatedAt),
     });
     const updated = await repo.findOneOrFail({ where: { id: user.id } });

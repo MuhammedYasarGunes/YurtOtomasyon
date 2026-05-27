@@ -98,7 +98,8 @@ export class Container {
     this.evictResidentUseCase = new EvictResidentUseCase(
       this.roomRepository,
       this.userRepository,
-      this.applicationRepository
+      this.applicationRepository,
+      this.studentProfileRepository
     );
 
     this.payInvoiceUseCase = new PayInvoiceUseCase(

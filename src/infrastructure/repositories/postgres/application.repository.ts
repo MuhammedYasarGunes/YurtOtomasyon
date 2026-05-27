@@ -2,7 +2,7 @@
  * Postgres implementation for IApplicationRepository
  */
 
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { IApplicationRepository } from '../../../domain/repositories/interfaces.js';
 import { Application } from '../../../domain/types.js';
 import { ApplicationEntity } from '../../database/entities/application.entity.js';
@@ -39,16 +39,21 @@ export class PostgresApplicationRepository implements IApplicationRepository {
   async save(application: Application): Promise<Application> {
     const repo = await this.repositoryPromise;
     const entity = repo.create({
-      ...application,
+      id: application.id,
+      studentId: application.studentId,
+      preferredTenantId: application.preferredTenantId,
+      studentName: application.studentName,
+      studentEmail: application.studentEmail,
+      status: application.status,
+      lifestyleForm: application.lifestyleForm as Record<string, any>,
+      suggestedRoomId: application.suggestedRoomId ?? null,
+      compatibilityLog: application.compatibilityLog ?? null,
+      vector: application.vector ?? null,
       tags: application.tags || [],
-      lifestyleForm: application.lifestyleForm,
-      compatibilityLog: application.compatibilityLog || null,
-      vector: application.vector || null,
-      suggestedRoomId: application.suggestedRoomId || null,
       submittedAt: new Date(application.submittedAt),
       createdAt: new Date(application.createdAt),
       updatedAt: new Date(application.updatedAt),
-    });
+    } as DeepPartial<ApplicationEntity>);
     const saved = await repo.save(entity);
     return mapApplicationEntityToDomain(saved);
   }

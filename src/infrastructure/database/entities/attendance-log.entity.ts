@@ -18,6 +18,7 @@ import { RoomEntity } from './room.entity';
 @Entity('attendance_logs')
 @Index(['studentId'])
 @Index(['tenantId'])
+@Index(['roomId'])
 export class AttendanceLogEntity {
   @PrimaryColumn('uuid')
   id: string;
@@ -30,6 +31,9 @@ export class AttendanceLogEntity {
 
   @Column('uuid')
   tenantId: string;
+
+  @Column('uuid', { nullable: true })
+  roomId?: string;
 
   @Column({ type: 'varchar' })
   roomNumber: string;
@@ -61,6 +65,6 @@ export class AttendanceLogEntity {
   @ManyToOne(() => RoomEntity, room => room.attendanceLogs, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'roomNumber', referencedColumnName: 'roomNumber' })
+  @JoinColumn({ name: 'roomId' })
   room?: RoomEntity;
 }

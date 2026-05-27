@@ -157,10 +157,12 @@ export interface EntryExitLog {
   studentId: string;
   studentName: string;
   tenantId: string;
+  roomId?: string;
   roomNumber: string;
   direction: "IN" | "OUT";
   timestamp: string;
   loggedBy: string; // QR Scanner, Staff Name
+  createdAt?: string;
 }
 
 export interface Announcement {

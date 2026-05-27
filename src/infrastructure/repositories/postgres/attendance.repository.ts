@@ -27,7 +27,7 @@ export class PostgresAttendanceRepository implements IAttendanceRepository {
     const entity = repo.create({
       ...log,
       timestamp: new Date(log.timestamp),
-      createdAt: new Date(log.createdAt),
+      createdAt: log.createdAt ? new Date(log.createdAt) : undefined,
     });
     const saved = await repo.save(entity);
     return mapAttendanceLogEntityToDomain(saved);
