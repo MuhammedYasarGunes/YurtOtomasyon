@@ -13,7 +13,9 @@ import {
   JSONMaintenanceRepository,
   JSONAttendanceRepository,
   JSONAnnouncementRepository,
-  JSONNotificationRepository
+  JSONNotificationRepository,
+  JSONStudentProfileRepository,
+  JSONAssignmentLogRepository
 } from "./src/infrastructure/repositories/JSONRepositories.js";
 
 // Clean Architecture Application Usecases/Interactors
@@ -26,7 +28,7 @@ import {
 } from "./src/application/usecases/DormInteractors.js";
 
 import { analyzeStudentLifestyle, explainRoomCompatibility } from "./src/gemini.js";
-import { ApplicationStatus, UserRole, Notification, EntryExitLog, Announcement } from "./src/types.js";
+import { ApplicationStatus, UserRole, Notification, EntryExitLog, Announcement } from "./src/domain/types.js";
 import { readDB, writeDB } from "./src/db.js";
 import https from 'https'; // Bunu ekleyin
 
@@ -46,22 +48,34 @@ const maintRepo = new JSONMaintenanceRepository();
 const attendanceRepo = new JSONAttendanceRepository();
 const announcementRepo = new JSONAnnouncementRepository();
 const notifRepo = new JSONNotificationRepository();
+const studentProfileRepo = new JSONStudentProfileRepository();
+const assignmentLogRepo = new JSONAssignmentLogRepository();
 
 const submitAppUseCase = new SubmitApplicationUseCase(userRepo, appRepo);
-const assignRoomUseCase = new AssignRoomUseCase(appRepo, roomRepo, userRepo, paymentRepo, notifRepo, tenantRepo);
-const evictUseCase = new EvictResidentUseCase(roomRepo, userRepo, appRepo);
+const assignRoomUseCase = new AssignRoomUseCase(
+  appRepo,
+  roomRepo,
+  userRepo,
+  paymentRepo,
+  notifRepo,
+  tenantRepo,
+  studentProfileRepo,
+  assignmentLogRepo
+);
+const evictUseCase = new EvictResidentUseCase(roomRepo, userRepo, appRepo, studentProfileRepo);
 const payInvoiceUseCase = new PayInvoiceUseCase(paymentRepo, notifRepo);
 const createMaintUseCase = new CreateMaintenanceUseCase(userRepo, roomRepo, maintRepo);
 
 // Helper to quickly dispatch dynamic notifications via clean architecture repo
-function createInAppNotification(userId: string, title: string, message: string) {
+async function createInAppNotification(userId: string, title: string, message: string) {
   const newNotif: Notification = {
     id: "notif-" + Math.random().toString(36).substring(2, 11),
     userId,
     title,
     message,
     isRead: false,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   return notifRepo.save(newNotif);
 }
@@ -69,54 +83,54 @@ function createInAppNotification(userId: string, title: string, message: string)
 // --- API Endpoints mapping onto Clean Architecture ---
 
 // Retrieve the active database schema
-app.get("/api/state", (req: Request, res: Response) => {
+app.get("/api/state", async (req: Request, res: Response) => {
   try {
-    res.json({
-      users: userRepo.getAll(),
-      tenants: tenantRepo.getAll(),
-      rooms: roomRepo.getAll(),
-      applications: appRepo.getAll(),
-      payments: paymentRepo.getAll(),
-      maintenance: maintRepo.getAll(),
-      attendance: attendanceRepo.getAll(),
-      announcements: announcementRepo.getAll()
+    return res.json({
+      users: await userRepo.getAll(),
+      tenants: await tenantRepo.getAll(),
+      rooms: await roomRepo.getAll(),
+      applications: await appRepo.getAll(),
+      payments: await paymentRepo.getAll(),
+      maintenance: await maintRepo.getAll(),
+      attendance: await attendanceRepo.getAll(),
+      announcements: await announcementRepo.getAll()
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Authentication Simulator (RBAC) with clean repositories
-app.post("/api/auth/login", (req: Request, res: Response) => {
+app.post("/api/auth/login", async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ error: "E-posta adresi gereklidir" });
     }
 
-    const foundUser = userRepo.getByEmail(email);
+    const foundUser = await userRepo.getByEmail(email);
 
     if (!foundUser) {
-      // Auto-register as student directly through user repo representation
       const newStudent = {
         id: "user-" + Math.random().toString(36).substring(2, 11),
         email: email.toLowerCase().trim(),
-        name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
         role: UserRole.STUDENT,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      userRepo.create(newStudent);
+      await userRepo.create(newStudent);
       return res.json({ user: newStudent, message: "Sisteme Öğrenci olarak otomatik kaydınız yapıldı!" });
     }
 
-    res.json({ user: foundUser });
+    return res.json({ user: foundUser });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Custom user registrations
-app.post("/api/auth/register-custom", (req: Request, res: Response) => {
+app.post("/api/auth/register-custom", async (req: Request, res: Response) => {
   try {
     const { email, name, role, tenantId } = req.body;
     if (!email || !name || !role) {
@@ -129,44 +143,45 @@ app.post("/api/auth/register-custom", (req: Request, res: Response) => {
       name,
       role,
       tenantId: tenantId || undefined,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    userRepo.create(newUser);
-    res.json({ user: newUser });
+    await userRepo.create(newUser);
+    return res.json({ user: newUser });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Tenants API
-app.get("/api/tenants", (req: Request, res: Response) => {
-  res.json(tenantRepo.getAll());
+app.get("/api/tenants", async (req: Request, res: Response) => {
+  return res.json(await tenantRepo.getAll());
 });
 
 // Rooms Management
-app.get("/api/rooms", (req: Request, res: Response) => {
+app.get("/api/rooms", async (req: Request, res: Response) => {
   const { tenantId } = req.query;
-  res.json(roomRepo.getAll(tenantId as string));
+  return res.json(await roomRepo.getAll(tenantId as string));
 });
 
 // Applications Retrieval
-app.get("/api/applications", (req: Request, res: Response) => {
+app.get("/api/applications", async (req: Request, res: Response) => {
   const { tenantId } = req.query;
-  res.json(appRepo.getAll(tenantId as string));
+  return res.json(await appRepo.getAll(tenantId as string));
 });
 
 // Apply to a Dorm via clean interactor
-app.post("/api/applications/submit", (req: Request, res: Response) => {
+app.post("/api/applications/submit", async (req: Request, res: Response) => {
   try {
     const { studentId, preferredTenantId, lifestyleForm } = req.body;
     if (!studentId || !preferredTenantId || !lifestyleForm) {
       return res.status(400).json({ error: "Eksik parametreler" });
     }
 
-    const appRecord = submitAppUseCase.execute(studentId, preferredTenantId, lifestyleForm);
-    res.json(appRecord);
+    const appRecord = await submitAppUseCase.execute(studentId, preferredTenantId, lifestyleForm);
+    return res.json(appRecord);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -176,29 +191,23 @@ app.post("/api/applications/:id/analyze", async (req: Request, res: Response) =>
     const appId = req.params.id;
     const { tenantId } = req.body;
 
-    const application = appRepo.getById(appId);
+    const application = await appRepo.getById(appId);
     if (!application) {
       return res.status(404).json({ error: "Başvuru kaydı bulunamadı" });
     }
 
-    // Step 1: Analyze Lifestyle with schema-driven Gemini
     const analysis = await analyzeStudentLifestyle(application.lifestyleForm);
-
-    // Step 2: Query candidate rooms in preferred tenant
     const targetTenant = tenantId || application.preferredTenantId;
-    const candidateRooms = roomRepo.getAll(targetTenant).filter((r) => r.occupancy < r.capacity);
+    const candidateRooms = (await roomRepo.getAll(targetTenant)).filter((r) => r.occupancy < r.capacity);
 
     let ultimateMatch: any = null;
 
-    // Evaluate matching in candidate rooms using Gemini
     if (candidateRooms.length > 0) {
       let absoluteBestScore = -1;
-      const db = readDB();
+      const storedProfiles = await studentProfileRepo.getAll();
 
       for (const room of candidateRooms) {
-        // Query active profiles of current occupants
-        const residents = db.studentProfiles.filter((p: any) => room.residentIds.includes(p.studentId));
-        
+        const residents = storedProfiles.filter((profile) => room.residentIds.includes(profile.studentId));
         const evaluation = await explainRoomCompatibility(
           {
             name: application.studentName,
@@ -247,7 +256,6 @@ app.post("/api/applications/:id/analyze", async (req: Request, res: Response) =>
       };
     }
 
-    // Update Application Status to AI_MATCHED with suggested metadata
     application.status = ApplicationStatus.AI_MATCHED;
     application.suggestedRoomId = ultimateMatch.roomId;
     application.compatibilityLog = {
@@ -262,16 +270,16 @@ app.post("/api/applications/:id/analyze", async (req: Request, res: Response) =>
       application.tags = ultimateMatch.tags;
     }
 
-    appRepo.save(application);
-    res.json(application);
+    await appRepo.save(application);
+    return res.json(application);
   } catch (err: any) {
     console.error("AI Allocation error: ", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Finalize Room Assignment
-app.post("/api/applications/:id/assign", (req: Request, res: Response) => {
+app.post("/api/applications/:id/assign", async (req: Request, res: Response) => {
   try {
     const appId = req.params.id;
     const { roomId, assignedBy } = req.body;
@@ -279,15 +287,15 @@ app.post("/api/applications/:id/assign", (req: Request, res: Response) => {
       return res.status(400).json({ error: "roomId gereklidir" });
     }
 
-    const log = assignRoomUseCase.execute(appId, roomId, assignedBy || "DORM_ADMIN");
-    res.json({ success: true, log });
+    const log = await assignRoomUseCase.execute(appId, roomId, assignedBy || "DORM_ADMIN");
+    return res.json({ success: true, log });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Evict Student Resident
-app.post("/api/rooms/:roomId/evict", (req: Request, res: Response) => {
+app.post("/api/rooms/:roomId/evict", async (req: Request, res: Response) => {
   try {
     const { roomId } = req.params;
     const { studentId } = req.body;
@@ -295,62 +303,62 @@ app.post("/api/rooms/:roomId/evict", (req: Request, res: Response) => {
       return res.status(400).json({ error: "studentId boş olamaz" });
     }
 
-    evictUseCase.execute(studentId, roomId);
-    res.json({ success: true });
+    await evictUseCase.execute(studentId, roomId);
+    return res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Payments API
-app.get("/api/payments", (req: Request, res: Response) => {
+app.get("/api/payments", async (req: Request, res: Response) => {
   const { tenantId, studentId } = req.query;
-  let list = paymentRepo.getAll(tenantId as string);
+  let list = await paymentRepo.getAll(tenantId as string);
   if (studentId) {
     list = list.filter((p) => p.studentId === studentId);
   }
   res.json(list);
 });
 
-app.post("/api/payments/:id/pay", (req: Request, res: Response) => {
+app.post("/api/payments/:id/pay", async (req: Request, res: Response) => {
   try {
     const payId = req.params.id;
-    const updated = payInvoiceUseCase.execute(payId);
-    res.json(updated);
+    const updated = await payInvoiceUseCase.execute(payId);
+    return res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Maintenance Tickets
-app.get("/api/maintenance", (req: Request, res: Response) => {
+app.get("/api/maintenance", async (req: Request, res: Response) => {
   const { tenantId, studentId } = req.query;
-  let list = maintRepo.getAll(tenantId as string);
+  let list = await maintRepo.getAll(tenantId as string);
   if (studentId) {
     list = list.filter((m) => m.studentId === studentId);
   }
   res.json(list);
 });
 
-app.post("/api/maintenance/create", (req: Request, res: Response) => {
+app.post("/api/maintenance/create", async (req: Request, res: Response) => {
   try {
     const { studentId, title, description, category, urgency } = req.body;
     if (!studentId || !title || !description || !category || !urgency) {
       return res.status(400).json({ error: "Eksik parametreler girdiniz." });
     }
 
-    const newReq = createMaintUseCase.execute(studentId, title, description, category, urgency);
-    res.json(newReq);
+    const newReq = await createMaintUseCase.execute(studentId, title, description, category, urgency);
+    return res.json(newReq);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
-app.post("/api/maintenance/:id/update", (req: Request, res: Response) => {
+app.post("/api/maintenance/:id/update", async (req: Request, res: Response) => {
   try {
     const reqId = req.params.id;
     const { status, staffUpdate } = req.body;
-    const reqInstance = maintRepo.getById(reqId);
+    const reqInstance = await maintRepo.getById(reqId);
     if (!reqInstance) throw new Error("Arıza kaydı bulunamadı");
 
     reqInstance.status = status;
@@ -358,38 +366,38 @@ app.post("/api/maintenance/:id/update", (req: Request, res: Response) => {
       reqInstance.staffUpdate = staffUpdate;
     }
     reqInstance.updatedAt = new Date().toISOString();
-    maintRepo.save(reqInstance);
+    await maintRepo.save(reqInstance);
 
-    createInAppNotification(
+    await createInAppNotification(
       reqInstance.studentId,
       `Talebiniz Güncellendi: ${reqInstance.title}`,
       `Arıza talebinizin son durumu: ${status}. Görevli notu: ${staffUpdate || "Yok"}`
     );
 
-    res.json(reqInstance);
+    return res.json(reqInstance);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Entry/Exit Logs
-app.get("/api/attendance", (req: Request, res: Response) => {
+app.get("/api/attendance", async (req: Request, res: Response) => {
   const { tenantId, studentId } = req.query;
-  let list = attendanceRepo.getAll(tenantId as string);
+  let list = await attendanceRepo.getAll(tenantId as string);
   if (studentId) {
     list = list.filter((l) => l.studentId === studentId);
   }
   res.json(list);
 });
 
-app.post("/api/attendance/log", (req: Request, res: Response) => {
+app.post("/api/attendance/log", async (req: Request, res: Response) => {
   try {
     const { studentId, direction, loggedBy } = req.body;
     if (!studentId || !direction) {
       return res.status(400).json({ error: "Eksik parametre girdiniz." });
     }
 
-    const student = userRepo.getById(studentId);
+    const student = await userRepo.getById(studentId);
     if (!student) throw new Error("Öğrenci bulunamadı");
 
     const db = readDB();
@@ -404,23 +412,24 @@ app.post("/api/attendance/log", (req: Request, res: Response) => {
       roomNumber: roomNo,
       direction,
       timestamp: new Date().toISOString(),
-      loggedBy: loggedBy || "QR RFID Tarayıcı Terminal"
+      loggedBy: loggedBy || "QR RFID Tarayıcı Terminal",
+      createdAt: new Date().toISOString()
     };
 
-    attendanceRepo.save(newLog);
-    res.json(newLog);
+    await attendanceRepo.save(newLog);
+    return res.json(newLog);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Announcements
-app.get("/api/announcements", (req: Request, res: Response) => {
+app.get("/api/announcements", async (req: Request, res: Response) => {
   const { tenantId } = req.query;
-  res.json(announcementRepo.getAll(tenantId as string));
+  return res.json(await announcementRepo.getAll(tenantId as string));
 });
 
-app.post("/api/announcements/create", (req: Request, res: Response) => {
+app.post("/api/announcements/create", async (req: Request, res: Response) => {
   try {
     const { tenantId, title, content, priority, targetRole } = req.body;
     if (!title || !content || !priority) {
@@ -434,46 +443,47 @@ app.post("/api/announcements/create", (req: Request, res: Response) => {
       content,
       priority,
       targetRole: targetRole || undefined,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
-    announcementRepo.save(newAnn);
-    res.json(newAnn);
+    await announcementRepo.save(newAnn);
+    return res.json(newAnn);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Notifications
-app.get("/api/notifications/:userId", (req: Request, res: Response) => {
-  res.json(notifRepo.getByUserId(req.params.userId));
+app.get("/api/notifications/:userId", async (req: Request, res: Response) => {
+  return res.json(await notifRepo.getByUserId(req.params.userId));
 });
 
-app.post("/api/notifications/:userId/mark-read", (req: Request, res: Response) => {
+app.post("/api/notifications/:userId/mark-read", async (req: Request, res: Response) => {
   try {
-    notifRepo.markAllAsRead(req.params.userId);
-    res.json({ success: true });
+    await notifRepo.markAllAsRead(req.params.userId);
+    return res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // Dashboard Analytics Aggregator in Repo Patterns
-app.get("/api/dashboard/stats", (req: Request, res: Response) => {
+app.get("/api/dashboard/stats", async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.query;
     const db = readDB();
 
-    let targetRooms = roomRepo.getAll();
-    let targetPayments = paymentRepo.getAll();
-    let targetMaint = maintRepo.getAll();
-    let targetApps = appRepo.getAll();
+    let targetRooms = await roomRepo.getAll();
+    let targetPayments = await paymentRepo.getAll();
+    let targetMaint = await maintRepo.getAll();
+    let targetApps = await appRepo.getAll();
 
     if (tenantId) {
-      targetRooms = roomRepo.getAll(tenantId as string);
-      targetPayments = paymentRepo.getAll(tenantId as string);
-      targetMaint = maintRepo.getAll(tenantId as string);
-      targetApps = appRepo.getAll(tenantId as string);
+      targetRooms = await roomRepo.getAll(tenantId as string);
+      targetPayments = await paymentRepo.getAll(tenantId as string);
+      targetMaint = await maintRepo.getAll(tenantId as string);
+      targetApps = await appRepo.getAll(tenantId as string);
     }
 
     const totalBeds = targetRooms.reduce((sum, r) => sum + r.capacity, 0);
@@ -498,8 +508,8 @@ app.get("/api/dashboard/stats", (req: Request, res: Response) => {
       ? Math.round(targetLogs.reduce((sum, l) => sum + l.compatibilityScore, 0) / targetLogs.length)
       : 88;
 
-    res.json({
-      dormName: tenantId ? (tenantRepo.getById(tenantId as string)?.name || "Yurt") : "Tüm Yurtlar",
+    return res.json({
+      dormName: tenantId ? ((await tenantRepo.getById(tenantId as string))?.name || "Yurt") : "Tüm Yurtlar",
       occupancyRate,
       totalBeds,
       occupiedBeds,
@@ -516,7 +526,7 @@ app.get("/api/dashboard/stats", (req: Request, res: Response) => {
       aiAssignmentSuccessScore: avgScore
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -548,7 +558,7 @@ const startServer = async () => {
       }
       
       // 3. Sadece normal sayfa geçişleri için HTML gönder
-      res.sendFile(path.join(distPath, "index.html"));
+      return res.sendFile(path.join(distPath, "index.html"));
     });
   }
 

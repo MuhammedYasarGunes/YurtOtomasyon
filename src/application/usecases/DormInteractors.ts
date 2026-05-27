@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   IUserRepository,
   ITenantRepository,
@@ -5,25 +6,62 @@ import {
   IApplicationRepository,
   IPaymentRepository,
   IMaintenanceRepository,
-  IAttendanceRepository,
-  IAnnouncementRepository,
-  INotificationRepository
-} from "../../domain/repositories/interfaces.js";
+  INotificationRepository,
+  IStudentProfileRepository,
+  IAssignmentLogRepository,
+} from '../../domain/repositories/interfaces.js';
 import {
-  User,
-  Room,
   Application,
-  Payment,
-  MaintenanceRequest,
-  EntryExitLog,
-  Announcement,
-  Notification,
-  LifestyleForm,
   ApplicationStatus,
+  AssignmentLog,
+  BehavioralVector,
+  LifestyleForm,
+  MaintenanceRequest,
+  MaintenanceStatus,
+  MaintenanceUrgency,
+  Payment,
+  PaymentStatus,
+  Room,
   StudentProfile,
-  AssignmentLog
-} from "../../types.js";
-import { readDB, writeDB } from "../../db.js";
+  User,
+  UserRole,
+} from '../../domain/types.js';
+
+function createTimestamp(): string {
+  return new Date().toISOString();
+}
+
+function buildInvoiceNumber(roomNumber: string): string {
+  const year = new Date().getFullYear();
+  return `INV-${year}-${roomNumber}-${Math.floor(Math.random() * 900 + 100)}`;
+}
+
+function calculateRoomStats(residentProfiles: StudentProfile[]) {
+  const totals = {
+    social: 0,
+    discipline: 0,
+    noise: 0,
+  };
+  const tags = new Set<string>();
+
+  residentProfiles.forEach(profile => {
+    if (profile.vector) {
+      totals.social += profile.vector.social_score;
+      totals.discipline += profile.vector.discipline_score;
+      totals.noise += profile.vector.noise_tolerance;
+    }
+    profile.tags?.forEach(tag => tags.add(tag));
+  });
+
+  const count = residentProfiles.length || 1;
+
+  return {
+    avgSocialScore: Math.round(totals.social / count),
+    avgDisciplineScore: Math.round(totals.discipline / count),
+    avgNoiseLevel: Math.round(totals.noise / count),
+    profileTags: Array.from(tags),
+  };
+}
 
 export class SubmitApplicationUseCase {
   constructor(
@@ -31,22 +69,27 @@ export class SubmitApplicationUseCase {
     private appRepo: IApplicationRepository
   ) {}
 
-  execute(studentId: string, tenantId: string, form: LifestyleForm): Application {
-    const student = this.userRepo.getById(studentId);
-    if (!student) throw new Error("Öğrenci bulunamadı");
+  async execute(studentId: string, tenantId: string, form: LifestyleForm): Promise<Application> {
+    const student = await this.userRepo.getById(studentId);
+    if (!student) {
+      throw new Error('Öğrenci bulunamadı');
+    }
 
-    // Eski başvuruları temizle yeni temiz sayfa aç
-    this.appRepo.deleteByStudentId(studentId);
+    await this.appRepo.deleteByStudentId(studentId);
 
+    const now = createTimestamp();
     const newApp: Application = {
-      id: "app-" + Math.random().toString(36).substring(2, 11),
+      id: uuidv4(),
       studentId,
       studentName: student.name,
       studentEmail: student.email,
       preferredTenantId: tenantId,
       lifestyleForm: form,
       status: ApplicationStatus.SUBMITTED,
-      submittedAt: new Date().toISOString()
+      submittedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      tags: [],
     };
 
     return this.appRepo.save(newApp);
@@ -60,130 +103,114 @@ export class AssignRoomUseCase {
     private userRepo: IUserRepository,
     private paymentRepo: IPaymentRepository,
     private notifRepo: INotificationRepository,
-    private tenantRepo: ITenantRepository
+    private tenantRepo: ITenantRepository,
+    private studentProfileRepo: IStudentProfileRepository,
+    private assignmentLogRepo: IAssignmentLogRepository
   ) {}
 
-  execute(appId: string, roomId: string, assignedByUserId: string): AssignmentLog {
-    const app = this.appRepo.getById(appId);
-    if (!app) throw new Error("Başvuru bulunamadı");
+  async execute(appId: string, roomId: string, assignedByUserId: string): Promise<AssignmentLog> {
+    const application = await this.appRepo.getById(appId);
+    if (!application) {
+      throw new Error('Başvuru bulunamadı');
+    }
 
-    const room = this.roomRepo.getById(roomId);
-    if (!room) throw new Error("Oda bulunamadı");
+    const room = await this.roomRepo.getById(roomId);
+    if (!room) {
+      throw new Error('Oda bulunamadı');
+    }
 
     if (room.occupancy >= room.capacity) {
-      throw new Error("Seçilen oda tamamen dolu");
+      throw new Error('Seçilen oda tamamen dolu');
     }
 
-    // Kullanıcıya oda ve yurdu ata
-    const student = this.userRepo.getById(app.studentId);
-    if (student) {
-      student.tenantId = room.tenantId;
-      this.userRepo.update(student);
+    const student = await this.userRepo.getById(application.studentId);
+    if (!student) {
+      throw new Error('Öğrenci bulunamadı');
     }
 
-    // Odaya sakini ekle
-    if (!room.residentIds.includes(app.studentId)) {
-      room.residentIds.push(app.studentId);
+    student.tenantId = room.tenantId;
+    student.updatedAt = createTimestamp();
+    await this.userRepo.update(student);
+
+    if (!room.residentIds.includes(application.studentId)) {
+      room.residentIds.push(application.studentId);
       room.occupancy = room.residentIds.length;
     }
 
-    // Room istatistiklerini hesapla
-    const db = readDB();
-    const residentProfiles = db.studentProfiles.filter((p) => room.residentIds.includes(p.studentId));
+    const residentProfiles = (await this.studentProfileRepo.getAll()).filter(profile =>
+      room.residentIds.includes(profile.studentId)
+    );
     if (residentProfiles.length > 0) {
-      let totalSocial = 0;
-      let totalDiscipline = 0;
-      let totalNoise = 0;
-      const allTags = new Set<string>();
-
-      residentProfiles.forEach((p) => {
-        if (p.vector) {
-          totalSocial += p.vector.social_score;
-          totalDiscipline += p.vector.discipline_score;
-          totalNoise += p.vector.noise_tolerance;
-        }
-        p.tags?.forEach((t) => allTags.add(t));
-      });
-
-      room.avgSocialScore = Math.round(totalSocial / residentProfiles.length);
-      room.avgDisciplineScore = Math.round(totalDiscipline / residentProfiles.length);
-      room.avgNoiseLevel = Math.round(totalNoise / residentProfiles.length);
-      room.profileTags = Array.from(allTags);
+      const stats = calculateRoomStats(residentProfiles);
+      room.avgSocialScore = stats.avgSocialScore;
+      room.avgDisciplineScore = stats.avgDisciplineScore;
+      room.avgNoiseLevel = stats.avgNoiseLevel;
+      room.profileTags = stats.profileTags;
     }
 
-    this.roomRepo.save(room);
+    room.updatedAt = createTimestamp();
+    await this.roomRepo.save(room);
 
-    // Öğrenci profilini kaydet
-    const existingProfileIdx = db.studentProfiles.findIndex((p) => p.studentId === app.studentId);
-    const newProfile: StudentProfile = {
-      studentId: app.studentId,
-      lifestyleAnswers: app.lifestyleForm,
-      vector: app.vector,
-      tags: app.tags,
-      analyzedAt: new Date().toISOString()
+    const profile: StudentProfile = {
+      studentId: application.studentId,
+      lifestyleAnswers: application.lifestyleForm,
+      vector: application.vector || undefined,
+      tags: application.tags || [],
+      analyzedAt: createTimestamp(),
+      updatedAt: createTimestamp(),
     };
-    if (existingProfileIdx !== -1) {
-      db.studentProfiles[existingProfileIdx] = newProfile;
-    } else {
-      db.studentProfiles.push(newProfile);
-    }
-    writeDB(db);
+    await this.studentProfileRepo.save(profile);
 
-    // Başvuru durumunu güncelle
-    app.status = ApplicationStatus.ASSIGNED;
-    app.suggestedRoomId = roomId;
-    this.appRepo.save(app);
+    application.status = ApplicationStatus.ASSIGNED;
+    application.suggestedRoomId = roomId;
+    application.updatedAt = createTimestamp();
+    await this.appRepo.save(application);
 
-    // Fatura oluştur
-    const tenant = this.tenantRepo.getById(room.tenantId);
-    const cost = tenant ? tenant.monthlyFee : 500;
-    const newPayment: Payment = {
-      id: "pay-" + Math.random().toString(36).substring(2, 11),
-      studentId: app.studentId,
-      studentName: app.studentName,
+    const tenant = await this.tenantRepo.getById(room.tenantId);
+    const amount = tenant ? tenant.monthlyFee : 500;
+
+    const payment: Payment = {
+      id: uuidv4(),
+      studentId: application.studentId,
+      studentName: application.studentName,
       tenantId: room.tenantId,
-      amount: cost,
-      dueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().split("T")[0],
-      status: "UNPAID",
-      invoiceNumber: "INV-" + new Date().getFullYear() + "-" + room.roomNumber + "-" + Math.floor(Math.random() * 900 + 100)
+      amount,
+      dueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+        .toISOString()
+        .split('T')[0],
+      status: PaymentStatus.UNPAID,
+      invoiceNumber: buildInvoiceNumber(room.roomNumber),
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
     };
-    this.paymentRepo.save(newPayment);
-
-    // Atama günlüğü kaydı
-    const compatibility = app.compatibilityLog?.compatibilityScore || 85;
-    const conflict = app.compatibilityLog?.conflictRisk || 15;
-    const notes = app.compatibilityLog?.matchingNotes || "Yönetici tarafından manuel yerleşim atandı.";
+    await this.paymentRepo.save(payment);
 
     const log: AssignmentLog = {
-      id: "log-" + Math.random().toString(36).substring(2, 11),
-      studentId: app.studentId,
-      studentName: app.studentName,
+      id: uuidv4(),
+      studentId: application.studentId,
+      studentName: application.studentName,
       roomId: room.id,
       roomNumber: room.roomNumber,
       tenantId: room.tenantId,
-      compatibilityScore: compatibility,
-      conflictRisk: conflict,
-      explanation: notes,
-      isOverridden: assignedByUserId !== "AI",
+      compatibilityScore: application.compatibilityLog?.compatibilityScore ?? 85,
+      conflictRisk: application.compatibilityLog?.conflictRisk ?? 15,
+      explanation: application.compatibilityLog?.matchingNotes ?? 'Yönetici tarafından manuel yerleşim atandı.',
+      isOverridden: assignedByUserId !== 'AI',
       assignedBy: assignedByUserId,
-      assignedAt: new Date().toISOString()
+      assignedAt: createTimestamp(),
     };
 
-    // Log kaydet
-    const activeDb = readDB();
-    activeDb.assignmentLogs.unshift(log);
-    writeDB(activeDb);
+    await this.assignmentLogRepo.save(log);
 
-    // Bildirim yolla
-    const newNotif: Notification = {
-      id: "notif-" + Math.random().toString(36).substring(2, 11),
-      userId: app.studentId,
-      title: "Oda Atamanız Gerçekleşti",
-      message: `Tebrikler! ${tenant?.name || "Yurdumuzda"} ${room.roomNumber} no'lu odaya yerleştirildiniz. Keyifli konaklamalar dileriz!`,
+    await this.notifRepo.save({
+      id: uuidv4(),
+      userId: application.studentId,
+      title: 'Oda Atamanız Gerçekleşti',
+      message: `Tebrikler! ${tenant?.name || 'Yurdumuzda'} ${room.roomNumber} no'lu odaya yerleştirildiniz. Keyifli konaklamalar dileriz!`,
       isRead: false,
-      createdAt: new Date().toISOString()
-    };
-    this.notifRepo.save(newNotif);
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    });
 
     return log;
   }
@@ -193,38 +220,29 @@ export class EvictResidentUseCase {
   constructor(
     private roomRepo: IRoomRepository,
     private userRepo: IUserRepository,
-    private appRepo: IApplicationRepository
+    private appRepo: IApplicationRepository,
+    private studentProfileRepo: IStudentProfileRepository
   ) {}
 
-  execute(studentId: string, roomId: string): void {
-    const room = this.roomRepo.getById(roomId);
-    if (!room) return;
+  async execute(studentId: string, roomId: string): Promise<void> {
+    const room = await this.roomRepo.getById(roomId);
+    if (!room) {
+      return;
+    }
 
-    room.residentIds = room.residentIds.filter((id) => id !== studentId);
+    room.residentIds = room.residentIds.filter(id => id !== studentId);
     room.occupancy = room.residentIds.length;
 
-    // Room istatistiklerini yeniden hesapla
-    const db = readDB();
-    const residentProfiles = db.studentProfiles.filter((p) => room.residentIds.includes(p.studentId));
+    const residentProfiles = (await this.studentProfileRepo.getAll()).filter(profile =>
+      room.residentIds.includes(profile.studentId)
+    );
+
     if (residentProfiles.length > 0) {
-      let totalSocial = 0;
-      let totalDiscipline = 0;
-      let totalNoise = 0;
-      const allTags = new Set<string>();
-
-      residentProfiles.forEach((p) => {
-        if (p.vector) {
-          totalSocial += p.vector.social_score;
-          totalDiscipline += p.vector.discipline_score;
-          totalNoise += p.vector.noise_tolerance;
-        }
-        p.tags?.forEach((t) => allTags.add(t));
-      });
-
-      room.avgSocialScore = Math.round(totalSocial / residentProfiles.length);
-      room.avgDisciplineScore = Math.round(totalDiscipline / residentProfiles.length);
-      room.avgNoiseLevel = Math.round(totalNoise / residentProfiles.length);
-      room.profileTags = Array.from(allTags);
+      const stats = calculateRoomStats(residentProfiles);
+      room.avgSocialScore = stats.avgSocialScore;
+      room.avgDisciplineScore = stats.avgDisciplineScore;
+      room.avgNoiseLevel = stats.avgNoiseLevel;
+      room.profileTags = stats.profileTags;
     } else {
       room.avgSocialScore = undefined;
       room.avgDisciplineScore = undefined;
@@ -232,16 +250,17 @@ export class EvictResidentUseCase {
       room.profileTags = [];
     }
 
-    this.roomRepo.save(room);
+    room.updatedAt = createTimestamp();
+    await this.roomRepo.save(room);
 
-    const student = this.userRepo.getById(studentId);
+    const student = await this.userRepo.getById(studentId);
     if (student) {
       student.tenantId = undefined;
-      this.userRepo.update(student);
+      student.updatedAt = createTimestamp();
+      await this.userRepo.update(student);
     }
 
-    // Yeniden başvuru yapabilmesi için eski başvuruyu sil
-    this.appRepo.deleteByStudentId(studentId);
+    await this.appRepo.deleteByStudentId(studentId);
   }
 }
 
@@ -251,27 +270,30 @@ export class PayInvoiceUseCase {
     private notifRepo: INotificationRepository
   ) {}
 
-  execute(payId: string): Payment {
-    const payment = this.paymentRepo.getById(payId);
-    if (!payment) throw new Error("Fatura kaydı bulunamadı");
+  async execute(paymentId: string): Promise<Payment> {
+    const payment = await this.paymentRepo.getById(paymentId);
+    if (!payment) {
+      throw new Error('Fatura kaydı bulunamadı');
+    }
 
-    payment.status = "PAID";
-    payment.paymentDate = new Date().toISOString();
-    payment.transactionHash = "0x" + Math.random().toString(16).substring(2, 18);
+    payment.status = PaymentStatus.PAID;
+    payment.paymentDate = createTimestamp();
+    payment.transactionHash = `0x${Math.random().toString(16).substring(2, 18)}`;
+    payment.updatedAt = createTimestamp();
 
-    this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
 
-    const newNotif: Notification = {
-      id: "notif-" + Math.random().toString(36).substring(2, 11),
+    await this.notifRepo.save({
+      id: uuidv4(),
       userId: payment.studentId,
-      title: "Ödeme Onaylandı",
-      message: `${payment.invoiceNumber} numaralı yurt faturası ödemeniz ($${payment.amount}) başarıyla alınmıştır. Teşekkür ederiz.`,
+      title: 'Ödeme Onaylandı',
+      message: `${payment.invoiceNumber} numaralı yurt faturası ödemeniz (${payment.amount}) başarıyla alınmıştır. Teşekkür ederiz.`,
       isRead: false,
-      createdAt: new Date().toISOString()
-    };
-    this.notifRepo.save(newNotif);
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    });
 
-    return payment;
+    return savedPayment;
   }
 }
 
@@ -282,22 +304,27 @@ export class CreateMaintenanceUseCase {
     private maintRepo: IMaintenanceRepository
   ) {}
 
-  execute(
+  async execute(
     studentId: string,
     title: string,
     description: string,
-    category: "Plumbing" | "Electrical" | "HVAC" | "Furniture" | "Other",
-    urgency: "LOW" | "MEDIUM" | "HIGH"
-  ): MaintenanceRequest {
-    const student = this.userRepo.getById(studentId);
-    if (!student) throw new Error("Öğrenci bulunamadı");
+    category: string,
+    urgency: string
+  ): Promise<MaintenanceRequest> {
+    const student = await this.userRepo.getById(studentId);
+    if (!student) {
+      throw new Error('Öğrenci bulunamadı');
+    }
 
-    const db = readDB();
-    const room = db.rooms.find((r) => r.residentIds.includes(studentId));
-    if (!room) throw new Error("Bu öğrenciye atanmış bir oda bulunamadı");
+    const rooms = await this.roomRepo.getAll();
+    const room = rooms.find(r => r.residentIds.includes(studentId));
+    if (!room) {
+      throw new Error('Bu öğrenciye atanmış bir oda bulunamadı');
+    }
 
-    const newReq: MaintenanceRequest = {
-      id: "maint-" + Math.random().toString(36).substring(2, 11),
+    const now = createTimestamp();
+    const request: MaintenanceRequest = {
+      id: uuidv4(),
       studentId,
       studentName: student.name,
       roomId: room.id,
@@ -306,12 +333,12 @@ export class CreateMaintenanceUseCase {
       title,
       description,
       category,
-      status: "SUBMITTED",
-      urgency,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      status: MaintenanceStatus.SUBMITTED,
+      urgency: urgency as MaintenanceUrgency,
+      createdAt: now,
+      updatedAt: now,
     };
 
-    return this.maintRepo.save(newReq);
+    return this.maintRepo.save(request);
   }
 }

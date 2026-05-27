@@ -9,7 +9,9 @@ import {
   IMaintenanceRepository,
   IAttendanceRepository,
   IAnnouncementRepository,
-  INotificationRepository
+  INotificationRepository,
+  IStudentProfileRepository,
+  IAssignmentLogRepository
 } from "../../domain/repositories/interfaces.js";
 import {
   User,
@@ -20,27 +22,36 @@ import {
   MaintenanceRequest,
   EntryExitLog,
   Announcement,
-  Notification
+  Notification,
+  StudentProfile,
+  AssignmentLog,
+} from "../../domain/types.js";
+import type {
+  Application as DBApplication,
+  Payment as DBPayment,
+  MaintenanceRequest as DBMaintenanceRequest,
+  Announcement as DBAnnouncement,
+  StudentProfile as DBStudentProfile,
 } from "../../types.js";
 import { readDB, writeDB, DatabaseSchema } from "../../db.js";
 
 export class JSONUserRepository implements IUserRepository {
-  getAll(): User[] {
-    return readDB().users;
+  async getAll(): Promise<User[]> {
+    return readDB().users as unknown as User[];
   }
-  getById(id: string): User | undefined {
-    return readDB().users.find((u) => u.id === id);
+  async getById(id: string): Promise<User | undefined> {
+    return readDB().users.find((u) => u.id === id) as unknown as User | undefined;
   }
-  getByEmail(email: string): User | undefined {
-    return readDB().users.find((u) => u.email.toLowerCase().trim() === email.toLowerCase().trim());
+  async getByEmail(email: string): Promise<User | undefined> {
+    return readDB().users.find((u) => u.email.toLowerCase().trim() === email.toLowerCase().trim()) as unknown as User | undefined;
   }
-  create(user: User): User {
+  async create(user: User): Promise<User> {
     const db = readDB();
     db.users.push(user);
     writeDB(db);
     return user;
   }
-  update(user: User): User {
+  async update(user: User): Promise<User> {
     const db = readDB();
     const idx = db.users.findIndex((u) => u.id === user.id);
     if (idx !== -1) {
@@ -52,23 +63,24 @@ export class JSONUserRepository implements IUserRepository {
 }
 
 export class JSONTenantRepository implements ITenantRepository {
-  getAll(): Tenant[] {
-    return readDB().tenants;
+  async getAll(): Promise<Tenant[]> {
+    return readDB().tenants as unknown as Tenant[];
   }
-  getById(id: string): Tenant | undefined {
-    return readDB().tenants.find((t) => t.id === id);
+  async getById(id: string): Promise<Tenant | undefined> {
+    return readDB().tenants.find((t) => t.id === id) as unknown as Tenant | undefined;
   }
 }
 
 export class JSONRoomRepository implements IRoomRepository {
-  getAll(tenantId?: string): Room[] {
+  async getAll(tenantId?: string): Promise<Room[]> {
     const db = readDB();
-    return tenantId ? db.rooms.filter((r) => r.tenantId === tenantId) : db.rooms;
+    const rooms = tenantId ? db.rooms.filter((r) => r.tenantId === tenantId) : db.rooms;
+    return rooms as unknown as Room[];
   }
-  getById(id: string): Room | undefined {
-    return readDB().rooms.find((r) => r.id === id);
+  async getById(id: string): Promise<Room | undefined> {
+    return readDB().rooms.find((r) => r.id === id) as unknown as Room | undefined;
   }
-  save(room: Room): Room {
+  async save(room: Room): Promise<Room> {
     const db = readDB();
     const idx = db.rooms.findIndex((r) => r.id === room.id);
     if (idx !== -1) {
@@ -82,28 +94,30 @@ export class JSONRoomRepository implements IRoomRepository {
 }
 
 export class JSONApplicationRepository implements IApplicationRepository {
-  getAll(tenantId?: string): Application[] {
+  async getAll(tenantId?: string): Promise<Application[]> {
     const db = readDB();
-    return tenantId ? db.applications.filter((a) => a.preferredTenantId === tenantId) : db.applications;
+    const applications = tenantId ? db.applications.filter((a) => a.preferredTenantId === tenantId) : db.applications;
+    return applications as unknown as Application[];
   }
-  getById(id: string): Application | undefined {
-    return readDB().applications.find((a) => a.id === id);
+  async getById(id: string): Promise<Application | undefined> {
+    return readDB().applications.find((a) => a.id === id) as unknown as Application | undefined;
   }
-  getByStudentId(studentId: string): Application | undefined {
-    return readDB().applications.find((a) => a.studentId === studentId);
+  async getByStudentId(studentId: string): Promise<Application | undefined> {
+    return readDB().applications.find((a) => a.studentId === studentId) as unknown as Application | undefined;
   }
-  save(application: Application): Application {
+  async save(application: Application): Promise<Application> {
     const db = readDB();
+    const dbApplication = application as unknown as DBApplication;
     const idx = db.applications.findIndex((a) => a.id === application.id);
     if (idx !== -1) {
-      db.applications[idx] = application;
+      db.applications[idx] = dbApplication;
     } else {
-      db.applications.push(application);
+      db.applications.push(dbApplication);
     }
     writeDB(db);
     return application;
   }
-  deleteByStudentId(studentId: string): void {
+  async deleteByStudentId(studentId: string): Promise<void> {
     const db = readDB();
     db.applications = db.applications.filter((a) => a.studentId !== studentId);
     writeDB(db);
@@ -111,20 +125,22 @@ export class JSONApplicationRepository implements IApplicationRepository {
 }
 
 export class JSONPaymentRepository implements IPaymentRepository {
-  getAll(tenantId?: string): Payment[] {
+  async getAll(tenantId?: string): Promise<Payment[]> {
     const db = readDB();
-    return tenantId ? db.payments.filter((p) => p.tenantId === tenantId) : db.payments;
+    const payments = tenantId ? db.payments.filter((p) => p.tenantId === tenantId) : db.payments;
+    return payments as unknown as Payment[];
   }
-  getById(id: string): Payment | undefined {
-    return readDB().payments.find((p) => p.id === id);
+  async getById(id: string): Promise<Payment | undefined> {
+    return readDB().payments.find((p) => p.id === id) as unknown as Payment | undefined;
   }
-  save(payment: Payment): Payment {
+  async save(payment: Payment): Promise<Payment> {
     const db = readDB();
+    const dbPayment = payment as unknown as DBPayment;
     const idx = db.payments.findIndex((p) => p.id === payment.id);
     if (idx !== -1) {
-      db.payments[idx] = payment;
+      db.payments[idx] = dbPayment;
     } else {
-      db.payments.push(payment);
+      db.payments.push(dbPayment);
     }
     writeDB(db);
     return payment;
@@ -132,20 +148,22 @@ export class JSONPaymentRepository implements IPaymentRepository {
 }
 
 export class JSONMaintenanceRepository implements IMaintenanceRepository {
-  getAll(tenantId?: string): MaintenanceRequest[] {
+  async getAll(tenantId?: string): Promise<MaintenanceRequest[]> {
     const db = readDB();
-    return tenantId ? db.maintenanceRequests.filter((m) => m.tenantId === tenantId) : db.maintenanceRequests;
+    const requests = tenantId ? db.maintenanceRequests.filter((m) => m.tenantId === tenantId) : db.maintenanceRequests;
+    return requests as unknown as MaintenanceRequest[];
   }
-  getById(id: string): MaintenanceRequest | undefined {
-    return readDB().maintenanceRequests.find((m) => m.id === id);
+  async getById(id: string): Promise<MaintenanceRequest | undefined> {
+    return readDB().maintenanceRequests.find((m) => m.id === id) as unknown as MaintenanceRequest | undefined;
   }
-  save(request: MaintenanceRequest): MaintenanceRequest {
+  async save(request: MaintenanceRequest): Promise<MaintenanceRequest> {
     const db = readDB();
+    const dbRequest = request as unknown as DBMaintenanceRequest;
     const idx = db.maintenanceRequests.findIndex((m) => m.id === request.id);
     if (idx !== -1) {
-      db.maintenanceRequests[idx] = request;
+      db.maintenanceRequests[idx] = dbRequest;
     } else {
-      db.maintenanceRequests.push(request);
+      db.maintenanceRequests.push(dbRequest);
     }
     writeDB(db);
     return request;
@@ -153,11 +171,12 @@ export class JSONMaintenanceRepository implements IMaintenanceRepository {
 }
 
 export class JSONAttendanceRepository implements IAttendanceRepository {
-  getAll(tenantId?: string): EntryExitLog[] {
+  async getAll(tenantId?: string): Promise<EntryExitLog[]> {
     const db = readDB();
-    return tenantId ? db.attendanceLogs.filter((a) => a.tenantId === tenantId) : db.attendanceLogs;
+    const logs = tenantId ? db.attendanceLogs.filter((a) => a.tenantId === tenantId) : db.attendanceLogs;
+    return logs as unknown as EntryExitLog[];
   }
-  save(log: EntryExitLog): EntryExitLog {
+  async save(log: EntryExitLog): Promise<EntryExitLog> {
     const db = readDB();
     db.attendanceLogs.unshift(log);
     writeDB(db);
@@ -166,29 +185,30 @@ export class JSONAttendanceRepository implements IAttendanceRepository {
 }
 
 export class JSONAnnouncementRepository implements IAnnouncementRepository {
-  getAll(tenantId?: string): Announcement[] {
+  async getAll(tenantId?: string): Promise<Announcement[]> {
     const db = readDB();
-    return tenantId ? db.announcements.filter((a) => !a.tenantId || a.tenantId === tenantId) : db.announcements;
+    const announcements = tenantId ? db.announcements.filter((a) => !a.tenantId || a.tenantId === tenantId) : db.announcements;
+    return announcements as unknown as Announcement[];
   }
-  save(announcement: Announcement): Announcement {
+  async save(announcement: Announcement): Promise<Announcement> {
     const db = readDB();
-    db.announcements.unshift(announcement);
+    db.announcements.unshift(announcement as unknown as DBAnnouncement);
     writeDB(db);
     return announcement;
   }
 }
 
 export class JSONNotificationRepository implements INotificationRepository {
-  getByUserId(userId: string): Notification[] {
-    return readDB().notifications.filter((n) => n.userId === userId);
+  async getByUserId(userId: string): Promise<Notification[]> {
+    return readDB().notifications.filter((n) => n.userId === userId) as unknown as Notification[];
   }
-  save(notification: Notification): Notification {
+  async save(notification: Notification): Promise<Notification> {
     const db = readDB();
     db.notifications.unshift(notification);
     writeDB(db);
     return notification;
   }
-  markAllAsRead(userId: string): void {
+  async markAllAsRead(userId: string): Promise<void> {
     const db = readDB();
     db.notifications.forEach((n) => {
       if (n.userId === userId) {
@@ -196,5 +216,41 @@ export class JSONNotificationRepository implements INotificationRepository {
       }
     });
     writeDB(db);
+  }
+}
+
+export class JSONStudentProfileRepository implements IStudentProfileRepository {
+  async getByStudentId(studentId: string): Promise<StudentProfile | undefined> {
+    return readDB().studentProfiles.find((p) => p.studentId === studentId) as unknown as StudentProfile | undefined;
+  }
+
+  async save(profile: StudentProfile): Promise<StudentProfile> {
+    const db = readDB();
+    const dbProfile = profile as unknown as DBStudentProfile;
+    const idx = db.studentProfiles.findIndex((p) => p.studentId === profile.studentId);
+    if (idx !== -1) {
+      db.studentProfiles[idx] = dbProfile;
+    } else {
+      db.studentProfiles.push(dbProfile);
+    }
+    writeDB(db);
+    return profile;
+  }
+
+  async getAll(): Promise<StudentProfile[]> {
+    return readDB().studentProfiles as unknown as StudentProfile[];
+  }
+}
+
+export class JSONAssignmentLogRepository implements IAssignmentLogRepository {
+  async getAll(): Promise<AssignmentLog[]> {
+    return readDB().assignmentLogs as unknown as AssignmentLog[];
+  }
+
+  async save(log: AssignmentLog): Promise<AssignmentLog> {
+    const db = readDB();
+    db.assignmentLogs.unshift(log);
+    writeDB(db);
+    return log;
   }
 }

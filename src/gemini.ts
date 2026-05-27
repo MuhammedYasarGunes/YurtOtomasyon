@@ -4,7 +4,7 @@
  */
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { LifestyleForm, BehavioralVector, Room, StudentProfile } from "./types.js";
+import { LifestyleForm, BehavioralVector, Room, StudentProfile } from "./domain/types.js";
 
 const apiKey = process.env.GEMINI_API_KEY || "AIzaSyDF-ORdB_NoBCSFMtBT_pOhQXuWq2uE5aE";
 

@@ -8,61 +8,72 @@ import {
   EntryExitLog,
   Announcement,
   Notification,
-  LifestyleForm,
-  ApplicationStatus
-} from "../../types.js";
+  StudentProfile,
+  AssignmentLog,
+} from '../types.js';
 
 export interface IUserRepository {
-  getAll(): User[];
-  getById(id: string): User | undefined;
-  getByEmail(email: string): User | undefined;
-  create(user: User): User;
-  update(user: User): User;
+  getAll(): Promise<User[]>;
+  getById(id: string): Promise<User | undefined>;
+  getByEmail(email: string): Promise<User | undefined>;
+  create(user: User): Promise<User>;
+  update(user: User): Promise<User>;
 }
 
 export interface ITenantRepository {
-  getAll(): Tenant[];
-  getById(id: string): Tenant | undefined;
+  getAll(): Promise<Tenant[]>;
+  getById(id: string): Promise<Tenant | undefined>;
 }
 
 export interface IRoomRepository {
-  getAll(tenantId?: string): Room[];
-  getById(id: string): Room | undefined;
-  save(room: Room): Room;
+  getAll(tenantId?: string): Promise<Room[]>;
+  getById(id: string): Promise<Room | undefined>;
+  save(room: Room): Promise<Room>;
 }
 
 export interface IApplicationRepository {
-  getAll(tenantId?: string): Application[];
-  getById(id: string): Application | undefined;
-  getByStudentId(studentId: string): Application | undefined;
-  save(application: Application): Application;
-  deleteByStudentId(studentId: string): void;
+  getAll(tenantId?: string): Promise<Application[]>;
+  getById(id: string): Promise<Application | undefined>;
+  getByStudentId(studentId: string): Promise<Application | undefined>;
+  save(application: Application): Promise<Application>;
+  deleteByStudentId(studentId: string): Promise<void>;
+}
+
+export interface IAssignmentLogRepository {
+  getAll(): Promise<AssignmentLog[]>;
+  save(log: AssignmentLog): Promise<AssignmentLog>;
 }
 
 export interface IPaymentRepository {
-  getAll(tenantId?: string): Payment[];
-  getById(id: string): Payment | undefined;
-  save(payment: Payment): Payment;
+  getAll(tenantId?: string): Promise<Payment[]>;
+  getById(id: string): Promise<Payment | undefined>;
+  save(payment: Payment): Promise<Payment>;
 }
 
 export interface IMaintenanceRepository {
-  getAll(tenantId?: string): MaintenanceRequest[];
-  getById(id: string): MaintenanceRequest | undefined;
-  save(request: MaintenanceRequest): MaintenanceRequest;
+  getAll(tenantId?: string): Promise<MaintenanceRequest[]>;
+  getById(id: string): Promise<MaintenanceRequest | undefined>;
+  save(request: MaintenanceRequest): Promise<MaintenanceRequest>;
 }
 
 export interface IAttendanceRepository {
-  getAll(tenantId?: string): EntryExitLog[];
-  save(log: EntryExitLog): EntryExitLog;
+  getAll(tenantId?: string): Promise<EntryExitLog[]>;
+  save(log: EntryExitLog): Promise<EntryExitLog>;
 }
 
 export interface IAnnouncementRepository {
-  getAll(tenantId?: string): Announcement[];
-  save(announcement: Announcement): Announcement;
+  getAll(): Promise<Announcement[]>;
+  save(announcement: Announcement): Promise<Announcement>;
 }
 
 export interface INotificationRepository {
-  getByUserId(userId: string): Notification[];
-  save(notification: Notification): Notification;
-  markAllAsRead(userId: string): void;
+  getByUserId(userId: string): Promise<Notification[]>;
+  save(notification: Notification): Promise<Notification>;
+  markAllAsRead(userId: string): Promise<void>;
+}
+
+export interface IStudentProfileRepository {
+  getByStudentId(studentId: string): Promise<StudentProfile | undefined>;
+  save(profile: StudentProfile): Promise<StudentProfile>;
+  getAll(): Promise<StudentProfile[]>;
 }

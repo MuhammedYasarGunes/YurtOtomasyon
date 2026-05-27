@@ -75,24 +75,14 @@
       "email": "student_liam@yurtapp.com",
       "name": "Liam Carter",
       "role": "STUDENT",
-      "createdAt": "2026-05-18T14:30:00Z",
-      "tenantId": "tenant-nexus"
+      "createdAt": "2026-05-18T14:30:00Z"
     },
     {
       "id": "user-student-chloe",
       "email": "student_chloe@yurtapp.com",
       "name": "Chloe Davis",
       "role": "STUDENT",
-      "createdAt": "2026-05-19T10:15:00Z",
-      "tenantId": "tenant-oakridge"
-    },
-    {
-      "id": "user-tc2usxzg8",
-      "email": "muhammetyasargunes42@gmail.com",
-      "name": "Muhammed Yaşar Güneş",
-      "role": "DORM_ADMIN",
-      "tenantId": "tenant-oakridge",
-      "createdAt": "2026-05-26T21:47:35.610Z"
+      "createdAt": "2026-05-19T10:15:00Z"
     }
   ],
   "studentProfiles": [
@@ -151,38 +141,16 @@
         "highly-social"
       ],
       "analyzedAt": "2026-03-05T12:30:00Z"
-    },
+    }
+  ],
+  "applications": [
     {
-      "studentId": "user-student-chloe",
-      "lifestyleAnswers": {
-        "sleepSchedule": "early-bird",
-        "cleanlinessLevel": 5,
-        "noiseTolerance": 1,
-        "smokingPreference": "non-smoker",
-        "socialLevel": 1,
-        "gamingHabits": "none",
-        "studyHabits": "solo-quiet",
-        "introvertExtrovert": 1,
-        "conflictTolerance": 2,
-        "preferredRoommateType": "Extremely quiet, tidy, and academically oriented roommate who values sleep."
-      },
-      "vector": {
-        "social_score": 20,
-        "discipline_score": 80,
-        "cleanliness_score": 100,
-        "noise_tolerance": 20,
-        "night_activity_score": 20
-      },
-      "tags": [
-        "early-bird",
-        "casual-user",
-        "tidiness-oriented"
-      ],
-      "analyzedAt": "2026-05-26T21:47:55.710Z"
-    },
-    {
+      "id": "app-liam",
       "studentId": "user-student-liam",
-      "lifestyleAnswers": {
+      "studentName": "Liam Carter",
+      "studentEmail": "student_liam@yurtapp.com",
+      "preferredTenantId": "tenant-nexus",
+      "lifestyleForm": {
         "sleepSchedule": "night-owl",
         "cleanlinessLevel": 3,
         "noiseTolerance": 4,
@@ -194,22 +162,27 @@
         "conflictTolerance": 4,
         "preferredRoommateType": "I prefer someone outgoing, gaming is cool, who stays up relatively late."
       },
+      "status": "AI_MATCHED",
       "vector": {
         "social_score": 80,
-        "discipline_score": 50,
+        "discipline_score": 65,
         "cleanliness_score": 60,
         "noise_tolerance": 80,
-        "night_activity_score": 85
+        "night_activity_score": 75
       },
       "tags": [
         "night-owl",
-        "casual-user",
-        "relaxed-profile"
+        "highly-social",
+        "moderate-discipline"
       ],
-      "analyzedAt": "2026-05-26T21:47:57.410Z"
-    }
-  ],
-  "applications": [
+      "suggestedRoomId": "room-nexus-301",
+      "compatibilityLog": {
+        "compatibilityScore": 88,
+        "conflictRisk": 15,
+        "matchingNotes": "High compatibility based on owl schedules, high noise tolerance, and joint visual profiles matching resident Sarah Lin."
+      },
+      "submittedAt": "2026-05-18T14:40:00Z"
+    },
     {
       "id": "app-chloe",
       "studentId": "user-student-chloe",
@@ -228,65 +201,8 @@
         "conflictTolerance": 2,
         "preferredRoommateType": "Extremely quiet, tidy, and academically oriented roommate who values sleep."
       },
-      "status": "ASSIGNED",
-      "submittedAt": "2026-05-19T10:20:00Z",
-      "suggestedRoomId": "room-oakridge-102",
-      "compatibilityLog": {
-        "compatibilityScore": 90,
-        "conflictRisk": 5,
-        "matchingNotes": "Allocated to empty room. Applicant expectations match general building rules perfectly."
-      },
-      "vector": {
-        "social_score": 20,
-        "discipline_score": 80,
-        "cleanliness_score": 100,
-        "noise_tolerance": 20,
-        "night_activity_score": 20
-      },
-      "tags": [
-        "early-bird",
-        "casual-user",
-        "tidiness-oriented"
-      ]
-    },
-    {
-      "id": "app-elcl6iawb",
-      "studentId": "user-student-liam",
-      "studentName": "Liam Carter",
-      "studentEmail": "student_liam@yurtapp.com",
-      "preferredTenantId": "tenant-nexus",
-      "lifestyleForm": {
-        "sleepSchedule": "night-owl",
-        "cleanlinessLevel": 3,
-        "noiseTolerance": 4,
-        "smokingPreference": "non-smoker",
-        "socialLevel": 4,
-        "gamingHabits": "occasional",
-        "studyHabits": "group-study",
-        "introvertExtrovert": 4,
-        "conflictTolerance": 4,
-        "preferredRoommateType": "I prefer someone outgoing, gaming is cool, who stays up relatively late."
-      },
-      "status": "ASSIGNED",
-      "submittedAt": "2026-05-26T21:47:02.974Z",
-      "suggestedRoomId": "room-nexus-301",
-      "compatibilityLog": {
-        "compatibilityScore": 95,
-        "conflictRisk": 8,
-        "matchingNotes": "Evaluated programmatically with a score of 95% compatibility and 8% conflict risk estimation based on lifestyle differentials."
-      },
-      "vector": {
-        "social_score": 80,
-        "discipline_score": 50,
-        "cleanliness_score": 60,
-        "noise_tolerance": 80,
-        "night_activity_score": 85
-      },
-      "tags": [
-        "night-owl",
-        "casual-user",
-        "relaxed-profile"
-      ]
+      "status": "SUBMITTED",
+      "submittedAt": "2026-05-19T10:20:00Z"
     }
   ],
   "rooms": [
@@ -370,34 +286,6 @@
   ],
   "assignmentLogs": [
     {
-      "id": "log-mudtzvccc",
-      "studentId": "user-student-liam",
-      "studentName": "Liam Carter",
-      "roomId": "room-nexus-301",
-      "roomNumber": "301",
-      "tenantId": "tenant-nexus",
-      "compatibilityScore": 95,
-      "conflictRisk": 8,
-      "explanation": "Evaluated programmatically with a score of 95% compatibility and 8% conflict risk estimation based on lifestyle differentials.",
-      "isOverridden": true,
-      "assignedBy": "Muhammed Yaşar Güneş",
-      "assignedAt": "2026-05-26T21:47:57.413Z"
-    },
-    {
-      "id": "log-no6pqh34t",
-      "studentId": "user-student-chloe",
-      "studentName": "Chloe Davis",
-      "roomId": "room-oakridge-102",
-      "roomNumber": "102",
-      "tenantId": "tenant-oakridge",
-      "compatibilityScore": 90,
-      "conflictRisk": 5,
-      "explanation": "Allocated to empty room. Applicant expectations match general building rules perfectly.",
-      "isOverridden": true,
-      "assignedBy": "Muhammed Yaşar Güneş",
-      "assignedAt": "2026-05-26T21:47:55.712Z"
-    },
-    {
       "id": "log-alex",
       "studentId": "user-student-alex",
       "studentName": "Alex Reed",
@@ -458,26 +346,6 @@
       "dueDate": "2026-04-01",
       "status": "OVERDUE",
       "invoiceNumber": "INV-2026-NEX-102"
-    },
-    {
-      "id": "pay-ojk3d8acm",
-      "studentId": "user-student-chloe",
-      "studentName": "Chloe Davis",
-      "tenantId": "tenant-oakridge",
-      "amount": 480,
-      "dueDate": "2026-05-31",
-      "status": "UNPAID",
-      "invoiceNumber": "INV-2026-102-791"
-    },
-    {
-      "id": "pay-4xkm2w0zb",
-      "studentId": "user-student-liam",
-      "studentName": "Liam Carter",
-      "tenantId": "tenant-nexus",
-      "amount": 580,
-      "dueDate": "2026-05-31",
-      "status": "UNPAID",
-      "invoiceNumber": "INV-2026-301-317"
     }
   ],
   "maintenanceRequests": [
@@ -563,22 +431,6 @@
     }
   ],
   "notifications": [
-    {
-      "id": "notif-lfm6591ni",
-      "userId": "user-student-liam",
-      "title": "Oda Atamanız Gerçekleşti",
-      "message": "Tebrikler! Nexus Cyber Tech Residence 301 no'lu odaya yerleştirildiniz. Keyifli konaklamalar dileriz!",
-      "isRead": false,
-      "createdAt": "2026-05-26T21:47:57.414Z"
-    },
-    {
-      "id": "notif-62jv08o6a",
-      "userId": "user-student-chloe",
-      "title": "Oda Atamanız Gerçekleşti",
-      "message": "Tebrikler! Oakridge Manor Dormitory 102 no'lu odaya yerleştirildiniz. Keyifli konaklamalar dileriz!",
-      "isRead": false,
-      "createdAt": "2026-05-26T21:47:55.713Z"
-    },
     {
       "id": "notif-1",
       "userId": "user-student-sarah",

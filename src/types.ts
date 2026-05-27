@@ -16,6 +16,8 @@ export interface Tenant {
   location: string;
   monthlyFee: number;
   totalRooms: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface User {
@@ -25,16 +27,17 @@ export interface User {
   role: UserRole;
   tenantId?: string; // Standard tenant separation
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface LifestyleForm {
-  sleepSchedule: "early-bird" | "night-owl" | "irregular";
+  sleepSchedule: "early-bird" | "normal" | "night-owl" | "irregular";
   cleanlinessLevel: number; // 1 to 5 (low to high)
   noiseTolerance: number; // 1 to 5 (low to high)
   smokingPreference: "non-smoker" | "smoker" | "no-preference";
   socialLevel: number; // 1 to 5
   gamingHabits: "none" | "occasional" | "frequent";
-  studyHabits: "solo-quiet" | "group-study" | "irregular";
+  studyHabits: "solo-quiet" | "group-study" | "flexible" | "irregular";
   introvertExtrovert: number; // 1 to 5 (1=introvert, 5=extrovert)
   conflictTolerance: number; // 1 to 5 (1=low/avoidant, 5=high/direct)
   preferredRoommateType: string;
@@ -81,6 +84,8 @@ export interface Application {
     matchingNotes: string;
   };
   submittedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Room {
@@ -95,6 +100,8 @@ export interface Room {
   avgDisciplineScore?: number;
   avgNoiseLevel?: number;
   profileTags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AssignmentLog {
@@ -123,6 +130,8 @@ export interface Payment {
   paymentDate?: string;
   transactionHash?: string;
   invoiceNumber: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MaintenanceRequest {
@@ -137,7 +146,7 @@ export interface MaintenanceRequest {
   category: "Plumbing" | "Electrical" | "HVAC" | "Furniture" | "Other";
   status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED";
   imageUrl?: string;
-  urgency: "LOW" | "MEDIUM" | "HIGH";
+  urgency: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   staffUpdate?: string;
   createdAt: string;
   updatedAt: string;
@@ -159,9 +168,10 @@ export interface Announcement {
   tenantId?: string; // Empty means global, otherwise specific to a dorm
   title: string;
   content: string;
-  priority: "LOW" | "MEDIUM" | "HIGH";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   targetRole?: UserRole; // Target specific group
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Notification {
@@ -171,4 +181,5 @@ export interface Notification {
   message: string;
   isRead: boolean;
   createdAt: string;
+  updatedAt?: string;
 }

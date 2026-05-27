@@ -12,8 +12,10 @@ import {
   IMaintenanceRepository,
   IAttendanceRepository,
   IAnnouncementRepository,
-  INotificationRepository
-} from "../domain/repositories/interfaces.js";
+  INotificationRepository,
+  IStudentProfileRepository,
+  IAssignmentLogRepository
+} from "./src/domain/repositories/interfaces.js";
 import {
   JSONUserRepository,
   JSONTenantRepository,
@@ -23,15 +25,17 @@ import {
   JSONMaintenanceRepository,
   JSONAttendanceRepository,
   JSONAnnouncementRepository,
-  JSONNotificationRepository
-} from "./repositories/JSONRepositories.js";
+  JSONNotificationRepository,
+  JSONStudentProfileRepository,
+  JSONAssignmentLogRepository
+} from "./src/infrastructure/repositories/JSONRepositories.js";
 import {
   SubmitApplicationUseCase,
   AssignRoomUseCase,
   EvictResidentUseCase,
   PayInvoiceUseCase,
   CreateMaintenanceUseCase
-} from "../application/usecases/DormInteractors.js";
+} from "./src/application/usecases/DormInteractors.js";
 
 /**
  * Dependency Injection Container
@@ -50,6 +54,8 @@ export class Container {
   private attendanceRepository: IAttendanceRepository;
   private announcementRepository: IAnnouncementRepository;
   private notificationRepository: INotificationRepository;
+  private studentProfileRepository: IStudentProfileRepository;
+  private assignmentLogRepository: IAssignmentLogRepository;
 
   // Use cases
   private submitApplicationUseCase: SubmitApplicationUseCase;
@@ -69,6 +75,8 @@ export class Container {
     this.attendanceRepository = new JSONAttendanceRepository();
     this.announcementRepository = new JSONAnnouncementRepository();
     this.notificationRepository = new JSONNotificationRepository();
+    this.studentProfileRepository = new JSONStudentProfileRepository();
+    this.assignmentLogRepository = new JSONAssignmentLogRepository();
 
     // Initialize use cases with injected dependencies
     this.submitApplicationUseCase = new SubmitApplicationUseCase(
@@ -82,7 +90,9 @@ export class Container {
       this.userRepository,
       this.paymentRepository,
       this.notificationRepository,
-      this.tenantRepository
+      this.tenantRepository,
+      this.studentProfileRepository,
+      this.assignmentLogRepository
     );
 
     this.evictResidentUseCase = new EvictResidentUseCase(
@@ -145,6 +155,14 @@ export class Container {
 
   getNotificationRepository(): INotificationRepository {
     return this.notificationRepository;
+  }
+
+  getStudentProfileRepository(): IStudentProfileRepository {
+    return this.studentProfileRepository;
+  }
+
+  getAssignmentLogRepository(): IAssignmentLogRepository {
+    return this.assignmentLogRepository;
   }
 
   // Use case getters
