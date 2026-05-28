@@ -156,7 +156,7 @@ export interface EntryExitLog {
   id: string;
   studentId: string;
   studentName: string;
-  tenantId: string;
+  tenantId?: string;
   roomId?: string;
   roomNumber: string;
   direction: "IN" | "OUT";

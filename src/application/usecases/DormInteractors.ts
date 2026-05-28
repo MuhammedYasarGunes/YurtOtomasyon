@@ -69,7 +69,7 @@ export class SubmitApplicationUseCase {
     private appRepo: IApplicationRepository
   ) {}
 
-  async execute(studentId: string, tenantId: string, form: LifestyleForm): Promise<Application> {
+  async execute(studentId: string, tenantId: string | undefined, form: LifestyleForm): Promise<Application> {
     const student = await this.userRepo.getById(studentId);
     if (!student) {
       throw new Error('Öğrenci bulunamadı');
@@ -83,7 +83,7 @@ export class SubmitApplicationUseCase {
       studentId,
       studentName: student.name,
       studentEmail: student.email,
-      preferredTenantId: tenantId,
+      preferredTenantId: tenantId || undefined,
       lifestyleForm: form,
       status: ApplicationStatus.SUBMITTED,
       submittedAt: now,

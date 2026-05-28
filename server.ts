@@ -172,7 +172,7 @@ app.get("/api/applications", async (req: Request, res: Response) => {
 app.post("/api/applications/submit", async (req: Request, res: Response) => {
   try {
     const { studentId, preferredTenantId, lifestyleForm } = req.body;
-    if (!studentId || !preferredTenantId || !lifestyleForm) {
+    if (!studentId || !lifestyleForm) {
       return res.status(400).json({ error: "Eksik parametreler" });
     }
 
@@ -244,7 +244,7 @@ app.post("/api/applications/:id/analyze", async (req: Request, res: Response) =>
       };
     } else if (!ultimateMatch) {
       ultimateMatch = {
-        roomId: "",
+        roomId: null,
         roomNumber: "UYGUN ODA YOK",
         compatibilityScore: 0,
         conflictRisk: 100,
@@ -406,7 +406,7 @@ app.post("/api/attendance/log", async (req: Request, res: Response) => {
       id: uuidv4(),
       studentId,
       studentName: student.name,
-      tenantId: student.tenantId || "YOK",
+      tenantId: student.tenantId ?? undefined,
       roomId: room?.id,
       roomNumber: roomNo,
       direction,

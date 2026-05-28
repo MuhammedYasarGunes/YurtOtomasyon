@@ -161,6 +161,10 @@ export default function App() {
       if (!res.ok) throw new Error("HTTP durumu: " + res.status);
       const data = await res.json();
       setDbState(data);
+      // Eğer kullanıcı henüz tercihli yurt seçmemişse, sunucudan gelen ilk tenant ID'sini kullan
+      if (data?.tenants && data.tenants.length > 0) {
+        setPrefDorm((prev) => (!prev || prev === "tenant-nexus") ? data.tenants[0].id : prev);
+      }
     } catch (err: any) {
       triggerError("Veritabanı yüklenemedi: " + err.message);
     } finally {
@@ -296,7 +300,9 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studentId: currentUser.id,
-          preferredTenantId: prefDorm,
+          preferredTenantId: (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i).test(prefDorm)
+            ? prefDorm
+            : undefined,
           lifestyleForm
         })
       });

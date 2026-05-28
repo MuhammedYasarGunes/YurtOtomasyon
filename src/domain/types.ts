@@ -80,7 +80,7 @@ export interface Application {
   studentId: string;
   studentName: string;
   studentEmail: string;
-  preferredTenantId: string;
+  preferredTenantId?: string;
   lifestyleForm: LifestyleForm;
   status: ApplicationStatus;
   vector?: BehavioralVector;
@@ -186,7 +186,7 @@ export interface EntryExitLog {
   id: string;
   studentId: string;
   studentName: string;
-  tenantId: string;
+  tenantId?: string;
   roomId?: string;
   roomNumber: string;
   direction: 'IN' | 'OUT';

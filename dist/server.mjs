@@ -460,6 +460,7 @@ TenantEntity = __decorateClass([
 // src/infrastructure/database/entities/application.entity.ts
 var ApplicationStatus = /* @__PURE__ */ ((ApplicationStatus3) => {
   ApplicationStatus3["SUBMITTED"] = "SUBMITTED";
+  ApplicationStatus3["AI_MATCHED"] = "AI_MATCHED";
   ApplicationStatus3["UNDER_REVIEW"] = "UNDER_REVIEW";
   ApplicationStatus3["ASSIGNED"] = "ASSIGNED";
   ApplicationStatus3["REJECTED"] = "REJECTED";
@@ -475,7 +476,7 @@ __decorateClass([
   Column7("uuid")
 ], ApplicationEntity.prototype, "studentId", 2);
 __decorateClass([
-  Column7("uuid")
+  Column7("uuid", { nullable: true })
 ], ApplicationEntity.prototype, "preferredTenantId", 2);
 __decorateClass([
   Column7({ type: "varchar" })
@@ -1108,7 +1109,7 @@ var PostgresApplicationRepository = class {
     const entity = repo.create({
       id: application.id,
       studentId: application.studentId,
-      preferredTenantId: application.preferredTenantId,
+      preferredTenantId: application.preferredTenantId ?? null,
       studentName: application.studentName,
       studentEmail: application.studentEmail,
       status: application.status,
@@ -1437,7 +1438,7 @@ var SubmitApplicationUseCase = class {
       studentId,
       studentName: student.name,
       studentEmail: student.email,
-      preferredTenantId: tenantId,
+      preferredTenantId: tenantId || void 0,
       lifestyleForm: form,
       status: "SUBMITTED" /* SUBMITTED */,
       submittedAt: now,
@@ -1942,7 +1943,7 @@ app.get("/api/applications", async (req, res) => {
 app.post("/api/applications/submit", async (req, res) => {
   try {
     const { studentId, preferredTenantId, lifestyleForm } = req.body;
-    if (!studentId || !preferredTenantId || !lifestyleForm) {
+    if (!studentId || !lifestyleForm) {
       return res.status(400).json({ error: "Eksik parametreler" });
     }
     const appRecord = await submitAppUseCase.execute(studentId, preferredTenantId, lifestyleForm);
@@ -2004,7 +2005,7 @@ app.post("/api/applications/:id/analyze", async (req, res) => {
       };
     } else if (!ultimateMatch) {
       ultimateMatch = {
-        roomId: "",
+        roomId: null,
         roomNumber: "UYGUN ODA YOK",
         compatibilityScore: 0,
         conflictRisk: 100,
@@ -2141,7 +2142,7 @@ app.post("/api/attendance/log", async (req, res) => {
       id: uuidv42(),
       studentId,
       studentName: student.name,
-      tenantId: student.tenantId || "YOK",
+      tenantId: student.tenantId ?? void 0,
       roomId: room?.id,
       roomNumber: roomNo,
       direction,

@@ -18,6 +18,7 @@ import { RoomEntity } from './room.entity';
 
 export enum ApplicationStatus {
   SUBMITTED = 'SUBMITTED',
+  AI_MATCHED = 'AI_MATCHED',
   UNDER_REVIEW = 'UNDER_REVIEW',
   ASSIGNED = 'ASSIGNED',
   REJECTED = 'REJECTED',
@@ -34,8 +35,8 @@ export class ApplicationEntity {
   @Column('uuid')
   studentId: string;
 
-  @Column('uuid')
-  preferredTenantId: string;
+  @Column('uuid', { nullable: true })
+  preferredTenantId?: string;
 
   @Column({ type: 'varchar' })
   studentName: string;

@@ -41,7 +41,7 @@ export class PostgresApplicationRepository implements IApplicationRepository {
     const entity = repo.create({
       id: application.id,
       studentId: application.studentId,
-      preferredTenantId: application.preferredTenantId,
+      preferredTenantId: application.preferredTenantId ?? null,
       studentName: application.studentName,
       studentEmail: application.studentEmail,
       status: application.status,
